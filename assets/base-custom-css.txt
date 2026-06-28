@@ -151,6 +151,15 @@ body:not(.logged-in) .admin-only {
     background-repeat: no-repeat;
 }
 
+form .elementor-field-type-tel.intlTelInput-initiated {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+form .elementor-field-type-tel.intlTelInput-initiated .iti {
+    width: 100%;
+}
+
 @media screen and (min-width: 1025px) {
     :root {
         --padding-block: 104px;
