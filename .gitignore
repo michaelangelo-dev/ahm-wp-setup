@@ -1,0 +1,16 @@
+# General
+*.log
+*.bak
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Environment variables
+.env
+.env.local
+
+# Dependencies (if any Node.js tools are used in the future)
+node_modules/

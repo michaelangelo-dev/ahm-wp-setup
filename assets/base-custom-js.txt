@@ -1,0 +1,376 @@
+<script>
+(() => {
+    const config = {
+        init: function () {
+            this.handleScroll()
+            this.bindEvents()
+            this.devScripts()
+
+            this.observeDateInputs()
+            this.formSubmitSpinner()
+            this.addFormSpinnerSyle()
+            this.headerMenuHoverEvents()
+
+            // this.oddEvenGridItemGridItems()
+            // this.slidePauseOnLightbox()
+            // this.imageCarousel()
+            // this.tocOverride()
+        },
+
+        handleScroll: function () {
+            const isScrolled = window.scrollY >= 30
+            document.body.classList.toggle('is-scrolled', isScrolled)
+        },
+
+        bindEvents: function () {
+            window.addEventListener('resize', () => this.handleScroll())
+            window.addEventListener('scroll', () => this.handleScroll(), { passive: true })
+            window.addEventListener('keydown', (e) => this.devScripts(e))
+        },
+
+        devScripts: function (e) {
+            if (! e) return
+
+            const isModifier = e.ctrlKey || e.metaKey
+
+            // Add red outline to all elements for debugging
+            if (isModifier && e.key === 'ArrowDown') {
+                e.preventDefault()
+
+                const allElements = document.querySelectorAll('*')
+                const isOutlined = document.body.dataset.outlineActive === 'true'
+
+                if (isOutlined) {
+                    allElements.forEach(el => {
+                        el.style.outline = ''
+                    })
+                    document.body.dataset.outlineActive = 'false'
+                } else {
+                    allElements.forEach(el => {
+                        el.style.outline = '1px solid red'
+                    })
+                    document.body.dataset.outlineActive = 'true'
+                }
+            }
+
+            // Reload page with ?nowprocket to test without Rocket Loader
+            if (isModifier && e.key === 'ArrowUp') {
+                e.preventDefault()
+                const url = new URL(window.location.href)
+
+                if (!url.searchParams.has('nowprocket')) {
+                    url.searchParams.set('nowprocket', '')
+                    window.location.href = url.toString()
+                }
+            }
+        },
+
+        addFormSpinnerSyle: function() {
+            const style = document.createElement('style')
+            const css = `
+                /* Create the Spinner using a pseudo-element */
+                .elementor-form .elementor-button.is-loading::after {
+                    content: "";
+                    position: absolute;
+                    width: 18px;
+                    height: 18px;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    margin: auto;
+                    border: 2px solid rgba(255, 255, 255, 0.3);
+                    border-top-color: #fff;
+                    border-radius: 50%;
+                    animation: spin 0.6s linear infinite;
+                }
+
+                .elementor-form .elementor-button.is-loading .elementor-button-content-wrapper {
+                    opacity: 0;
+                }
+
+                /* Loading Animation Keyframes */
+                @keyframes spin {
+                    to {
+                        transform: rotate(360deg);
+                    }
+                }
+            `
+
+            style.textContent = css
+            document.head.appendChild(style)
+        },
+
+        headerMenuHoverEvents: function () {
+            const menuItems = document.querySelectorAll('.header-menu-item')
+            const target = document.querySelector('.header-menu-item-image')
+
+            if (! target || ! menuItems.length) return
+
+            const computedTargetImage = window.getComputedStyle(target).backgroundImage
+            const defaultBg = computedTargetImage !== 'none' ? computedTargetImage : `url('/wp-content/uploads/2026/05/ImageWithFallback-4.webp')`
+
+            menuItems.forEach(item => {
+                const img = item.querySelector('img')
+                if (! img) return
+
+                // Elementor-safe image source resolution
+                const imgUrl =
+                    img.getAttribute('data-src') ||
+                    img.getAttribute('data-lazy-src') ||
+                    img.currentSrc ||
+                    img.src
+
+                item.addEventListener('mouseenter', () => {
+                    if (!imgUrl) return
+                    target.style.backgroundImage = `url("${imgUrl}")`
+                })
+
+                item.addEventListener('mouseleave', () => {
+                    target.style.backgroundImage = defaultBg
+                })
+            })
+        },
+
+        formSubmitSpinner: function() {
+            document.addEventListener('submit', function(event) {
+                const form = event.target
+
+                if (! form.classList.contains('elementor-form')) return
+
+                const observer = new MutationObserver(function(mutations, observerInstance) {
+                    const successMessage = form.querySelector('.elementor-message-success')
+
+                    if (successMessage) {
+                        const button = form.querySelector('.elementor-button[type="submit"]')
+                        if (button) {
+                            button.classList.remove('is-loading')
+                            button.disabled = false
+                        }
+
+                        observerInstance.disconnect()
+                    }
+                })
+
+                observer.observe(form, { childList: true, subtree: true })
+            })
+
+            const forms = document.querySelectorAll('.elementor-form')
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    const button = this.querySelector('button[type="submit"]')
+                    if (button) {
+                        button.classList.add('is-loading')
+                        button.setAttribute('disabled', 'true')
+                    }
+                })
+            })
+        },
+
+        applyDateFieldSettings: function(el) {
+            const fields = {
+                // Field for today or future dates
+                // 'form-field-field_40a88a8': { minDate: 'today', maxDate: null },
+
+                // Field for today or past dates
+                // 'form-field-field_3a2b774':   { minDate: null, maxDate: 'today' }
+            }
+            const fieldId = el.getAttribute('id')
+            const settings = fields[fieldId]
+
+            const checkInstance = setInterval(() => {
+                if (el._flatpickr) {
+                    const instance = el._flatpickr
+
+                    // Manually remove the native validation
+                    el.removeAttribute('pattern')
+
+                    if (settings) {
+                        // For today or future dates
+                        if (settings.minDate) instance.set('minDate', settings.minDate)
+
+                        // For today or past dates
+                        if (settings.maxDate) instance.set('maxDate', settings.maxDate)
+
+                        instance.set('allowInput', true)
+                        instance.set('dateFormat', 'd/m/Y')
+
+                        if (el.value) {
+                            instance.setDate(el.value, true, 'd/m/Y')
+                        }
+
+                        el.setAttribute('placeholder', 'DD/MM/YYYY')
+                        clearInterval(checkInstance)
+                    }
+                }
+            }, 50)
+
+            setTimeout(() => clearInterval(checkInstance), 5000);
+        },
+
+        observeDateInputs: function() {
+            const self = this
+            const checkExist = setInterval(() => {
+                const inputs = document.querySelectorAll('.flatpickr-input')
+
+                if (inputs.length > 0) {
+                    let allInitialized = true
+
+                    inputs.forEach((el) => {
+                        if (el._flatpickr && !el.dataset.formatFixed) {
+                            self.applyDateFieldSettings(el)
+                            el.dataset.formatFixed = "true"
+                        } else if (!el._flatpickr) {
+                            allInitialized = false
+                        }
+                    })
+
+                    if (allInitialized) clearInterval(checkExist)
+                }
+            }, 100)
+
+            setTimeout(() => clearInterval(checkExist), 10000)
+        },
+
+        oddEvenGridItemGridItems: function() {
+            const targetContainer = document.querySelector('.with-odd-even-grid .elementor-loop-container')
+            if (!targetContainer) return
+
+            const applyGridClasses = () => {
+            const gridItems = targetContainer.querySelectorAll(':scope > .e-loop-item')
+                gridItems.forEach((item, index) => {
+                    if (index % 2 === 0) {
+                        item.classList.add('is-odd')
+                        item.classList.remove('is-even')
+                    } else {
+                        item.classList.add('is-even')
+                        item.classList.remove('is-odd')
+                    }
+                })
+            }
+
+            applyGridClasses()
+
+            const observer = new MutationObserver(applyGridClasses)
+            observer.observe(targetContainer, { childList: true })
+        },
+
+        slidePauseOnLightbox: function () {
+            const carousels = document.querySelectorAll('.some-selector .e-n-carousel')
+
+            if (! carousels.length) return
+
+            const toggleAutoplay = (action) => {
+                carousels.forEach(carousel => {
+                    const swiper = carousel.swiper
+                    if (swiper && swiper.autoplay) {
+                        action === 'stop' ? swiper.autoplay.stop() : swiper.autoplay.start()
+                    }
+                })
+            }
+
+            const isLightbox = (node) => {
+                return node.nodeType === 1 && (node.id === 'elementor-lightbox' || node.classList.contains('dialog-lightbox-widget'))
+            }
+
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        if (isLightbox(node)) toggleAutoplay('stop')
+                    })
+
+                    mutation.removedNodes.forEach(node => {
+                        if (isLightbox(node)) toggleAutoplay('start')
+                    })
+
+                    if (mutation.type === 'attributes' && isLightbox(mutation.target)) {
+                        const target = mutation.target
+                        const isHidden = window.getComputedStyle(target).display === 'none' || target.getAttribute('aria-hidden') === 'true'
+                        isHidden ? toggleAutoplay('start') : toggleAutoplay('stop')
+                    }
+                })
+            })
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class', 'aria-hidden']
+            })
+        },
+
+        imageCarousel: function () {
+            function applyCarousel() {
+                document.querySelectorAll('.image-carousel .swiper').forEach(function (el) {
+                    const swiper = el.swiper
+                    if (!swiper) return
+
+                    swiper.params.slidesPerView = 4
+                    swiper.params.spaceBetween = 28
+                    swiper.params.loop = true
+
+                    swiper.params.breakpoints = {
+                        768: {
+                            slidesPerView: 5
+                        },
+                        1025: {
+                            slidesPerView: 7,
+                            spaceBetween: 45
+                        },
+                        1440: {
+                            slidesPerView: 9,
+                            spaceBetween: 75
+                        }
+                    }
+
+                    swiper.update()
+                })
+            }
+
+            function initCarousel() {
+                const check = setInterval(function () {
+                    const swipers = document.querySelectorAll('.image-carousel .swiper')
+                    const ready = Array.from(swipers).some(el => el.swiper)
+                    if (!ready) return
+
+                    clearInterval(check)
+                    applyCarousel()
+                }, 200)
+            }
+
+            initCarousel()
+        },
+
+        tocOverride: function () {
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('.elementor-toc__list-item-text')
+
+                if (!link) return
+
+                const targetHref = link.getAttribute('href')
+
+                if (!targetHref || !targetHref.startsWith('#')) return
+
+                const targetHeading = document.querySelector(targetHref)
+
+                if (targetHeading) {
+                    e.preventDefault()
+
+                    const stickyHeaderHeight = 148
+                    const headingPosition = targetHeading.getBoundingClientRect().top + window.scrollY
+                    const finalPosition = headingPosition - stickyHeaderHeight
+
+                    window.scrollTo({
+                        top: finalPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            })
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        config.init()
+    })
+})()
+</script>

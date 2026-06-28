@@ -1,0 +1,253 @@
+/**
+ * AHM Core — Admin Styles
+ *
+ * @package AHM_Core
+ */
+
+/* ============================================================
+   Layout & Tabs
+   ============================================================ */
+
+.ahm-wrap {
+    max-width: 900px;
+    margin-top: 20px;
+}
+
+.ahm-tabs {
+    margin-bottom: 0;
+}
+
+.ahm-tab-content {
+    padding-top: 20px;
+}
+
+.ahm-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}
+
+.ahm-card h2 {
+    margin-top: 0;
+    padding-top: 0;
+    font-size: 1.15em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 12px;
+}
+
+/* ============================================================
+   Server Info Table
+   ============================================================ */
+
+.ahm-info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ahm-info-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.ahm-info-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================================
+   Badges
+   ============================================================ */
+
+.ahm-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+
+.ahm-badge--success {
+    background: #edfaef;
+    color: #00a32a;
+}
+
+.ahm-badge--error {
+    background: #fcf0f1;
+    color: #d63638;
+}
+
+/* ============================================================
+   Quality Slider
+   ============================================================ */
+
+.ahm-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 420px;
+}
+
+.ahm-range {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #dcdcde;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.ahm-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #2271b1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+.ahm-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #2271b1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+.ahm-range-output {
+    min-width: 38px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2271b1;
+    background: #f0f6fc;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+/* ============================================================
+   Warning text
+   ============================================================ */
+
+.ahm-warning {
+    color: #d63638;
+    font-weight: 500;
+}
+
+/* ============================================================
+   Progress Bar
+   ============================================================ */
+
+.ahm-progress {
+    margin-top: 18px;
+}
+
+.ahm-progress-bar-wrap {
+    width: 100%;
+    height: 28px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ahm-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #135e96);
+    border-radius: 4px;
+    transition: width .3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 36px;
+}
+
+.ahm-progress-text {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #50575e;
+}
+
+.ahm-progress-log {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    display: none;
+}
+
+.ahm-progress-log.has-entries {
+    display: block;
+}
+
+.ahm-log-entry--success { color: #00a32a; }
+.ahm-log-entry--error   { color: #d63638; }
+.ahm-log-entry--skip    { color: #996800; }
+
+/* ============================================================
+   Statistics Grid
+   ============================================================ */
+
+.ahm-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.ahm-stat {
+    text-align: center;
+    padding: 18px 10px;
+    background: #f6f7f7;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+}
+
+.ahm-stat__number {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1d2327;
+    line-height: 1.2;
+}
+
+.ahm-stat__number--success { color: #00a32a; }
+.ahm-stat__number--warning { color: #dba617; }
+
+.ahm-stat__label {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+/* ============================================================
+   Settings Table overrides
+   ============================================================ */
+
+.ahm-settings-table th {
+    width: 200px;
+    padding-top: 20px;
+}
+
+.ahm-settings-table td {
+    padding-top: 18px;
+}
