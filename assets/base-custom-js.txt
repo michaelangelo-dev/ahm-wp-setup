@@ -10,6 +10,7 @@
             this.formSubmitSpinner()
             this.addFormSpinnerSyle()
             this.headerMenuHoverEvents()
+            this.initIntlTelInput()
 
             // this.oddEvenGridItemGridItems()
             // this.slidePauseOnLightbox()
@@ -165,6 +166,66 @@
                     }
                 })
             })
+        },
+
+        initIntlTelInput: function() {
+            const initTelInputs = () => {
+                const telInputs = document.querySelectorAll('input[type="tel"]')
+                
+                if (! telInputs.length) return
+                
+                const applyIntlTelInput = () => {
+                    telInputs.forEach(input => {
+                        if (input.dataset.intlTelInputInitialized) return
+                        
+                        window.intlTelInput(input, {
+                            initialCountry: 'auto',
+                            geoIpLookup: callback => {
+                                fetch('https://ipapi.co/json')
+                                    .then(res => res.json())
+                                    .then(data => callback(data.country_code))
+                                    .catch(() => callback('us'))
+                            },
+                            // Ensure utilsScript is loaded for formatting/validation
+                            utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js'
+                        })
+                        
+                        input.dataset.intlTelInputInitialized = 'true'
+                        
+                        const parent = input.closest('.elementor-field-type-tel')
+                        if (parent) parent.classList.add('intlTelInput-initiated')
+                    })
+                }
+
+                if (typeof window.intlTelInput === 'function') {
+                    applyIntlTelInput()
+                    return
+                }
+
+                if (document.getElementById('intl-tel-input-js-script')) return
+
+                const cssLink = document.createElement('link')
+                cssLink.rel = 'stylesheet'
+                cssLink.href = 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css'
+                document.head.appendChild(cssLink)
+
+                const jsScript = document.createElement('script')
+                jsScript.id = 'intl-tel-input-js-script'
+                jsScript.src = 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js'
+                jsScript.onload = applyIntlTelInput
+                document.head.appendChild(jsScript)
+            }
+            
+            // Run immediately
+            initTelInputs()
+            
+            // Re-run for dynamically added elements (like popups)
+            const observer = new MutationObserver((mutations) => {
+                const hasNewNodes = mutations.some(m => m.addedNodes.length > 0)
+                if (hasNewNodes) initTelInputs()
+            })
+            
+            observer.observe(document.body, { childList: true, subtree: true })
         },
 
         applyDateFieldSettings: function(el) {
