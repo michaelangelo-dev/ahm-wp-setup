@@ -103,7 +103,9 @@ body:not(.logged-in) .admin-only {
 .image-carousel .swiper-slide img {
     width: auto;
     height: auto;
-}.form-has-acceptance .elementor-field-type-acceptance .elementor-field-option {
+}
+
+.form-has-acceptance .elementor-field-type-acceptance .elementor-field-option {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -143,6 +145,10 @@ form .elementor-field-type-tel.intlTelInput-initiated {
 
 form .elementor-field-type-tel.intlTelInput-initiated .iti {
     width: 100%;
+}
+
+form .elementor-field-type-tel.intlTelInput-initiated input[type="tel"] {
+    padding-left: 52px !important;
 }
 
 @media screen and (min-width: 1025px) {
