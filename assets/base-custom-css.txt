@@ -86,24 +86,9 @@ body:not(.logged-in) .admin-only {
     display: none !important;
 }
 
+.wp-menu-fit nav ul li,
 .icon-list-fit ul li {
     width: fit-content;
-}
-
-.btn.btn--svg-14 svg {
-    width: 14px;
-}
-
-.btn.btn--svg-16 svg {
-    width: 16px;
-}
-
-.btn.btn--svg-18 svg {
-    width: 18px;
-}
-
-.btn.btn--svg-20 svg {
-    width: 20px;
 }
 
 .image-carousel .swiper-wrapper {
