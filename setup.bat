@@ -32,7 +32,9 @@ echo =========================================================================
 echo.
 
 :: Prompt for the website name dynamically
-set /p SITE_NAME="[STEP 1] Enter the Website Name: "
+set /p SITE_NAME="[STEP 1] Enter the Website Name (Folder Name): "
+set /p SITE_TITLE="[STEP 1] Enter the Site Title: "
+set /p SITE_TAGLINE="[STEP 1] Enter the Site Tagline: "
 
 :: 1. Folder Name: Stays exactly as entered (e.g., wp-test-automation)
 set "FOLDER_NAME=%SITE_NAME%"
@@ -44,7 +46,9 @@ set SITE_URL="https://%FOLDER_NAME%.test"
 set "DB_NAME=%FOLDER_NAME:-=_%"
 
 echo.
-echo Project Title:           %SITE_NAME%
+echo Project Folder:          %SITE_NAME%
+echo Site Title:              %SITE_TITLE%
+echo Site Tagline:            %SITE_TAGLINE%
 echo New Target Directory:    %WWW_DIR%\%FOLDER_NAME%
 echo Target URL:              %SITE_URL%
 echo Database Name to Create: %DB_NAME%
@@ -155,11 +159,14 @@ echo Attempting to automatically create the database %DB_NAME% in MySQL...
 call wp db create
 echo.
 echo Running the core runtime setup installation...
-call wp core install --url=%SITE_URL% --title="%SITE_NAME%" --admin_user="admin" --admin_password="admin@123" --admin_email="michaelangelo@alliedhealthmedia.co.uk"
+call wp core install --url=%SITE_URL% --title="%SITE_TITLE%" --admin_user="admin" --admin_password="admin@123" --admin_email="michaelangelo@alliedhealthmedia.co.uk"
 if %ERRORLEVEL% neq 0 (
     echo Error during WordPress installation. Check database connection or credentials.
     exit /b
 )
+
+echo Updating Site Tagline...
+call wp option update blogdescription "%SITE_TAGLINE%"
 
 echo.
 echo WordPress core installation finished successfully.
