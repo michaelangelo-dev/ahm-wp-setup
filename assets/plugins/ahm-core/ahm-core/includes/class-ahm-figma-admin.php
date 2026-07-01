@@ -156,6 +156,22 @@ final class AHM_Figma_Admin
     }
 
     /**
+     * Helper to extract Node ID from Figma URL.
+     */
+    private function extract_node_id(string $url): string
+    {
+        $parsed = wp_parse_url($url);
+        if (isset($parsed['query'])) {
+            wp_parse_str($parsed['query'], $query);
+            if (isset($query['node-id'])) {
+                // Figma URL uses hyphens instead of colons for node IDs, but API expects colons.
+                return str_replace('-', ':', $query['node-id']);
+            }
+        }
+        return '';
+    }
+
+    /**
      * AJAX handler to convert and import Figma design.
      */
     public function ajax_import_design(): void
@@ -169,6 +185,7 @@ final class AHM_Figma_Admin
         $file_url   = isset($_POST['file_url']) ? esc_url_raw(wp_unslash($_POST['file_url'])) : '';
         $page_title = isset($_POST['page_title']) ? sanitize_text_field(wp_unslash($_POST['page_title'])) : 'Figma Import';
         $file_key   = $this->extract_file_key($file_url);
+        $node_id    = $this->extract_node_id($file_url);
 
         $content_width  = isset($_POST['content_width']) ? intval($_POST['content_width']) : 1140;
         $zero_padding   = isset($_POST['zero_padding']) && $_POST['zero_padding'] === 'true';
@@ -189,14 +206,16 @@ final class AHM_Figma_Admin
         $importer = new Elementor_Importer();
 
         // 1. Fetch file from Figma API
-        $figma_data = $api->get_file($file_key);
+        $figma_data = $api->get_file($file_key, $node_id);
         if (is_wp_error($figma_data)) {
             wp_send_json_error(['message' => sprintf(__('Figma API Error: %s', 'ahm-core'), $figma_data->get_error_message())]);
         }
 
         // 2. Identify Image Nodes and sideload images
         $image_node_ids = [];
-        if (isset($figma_data['document']['children']) && is_array($figma_data['document']['children'])) {
+        if (!empty($node_id) && isset($figma_data['nodes'][$node_id]['document'])) {
+            $image_node_ids = $parser->collect_image_node_ids($figma_data['nodes'][$node_id]['document']);
+        } elseif (isset($figma_data['document']['children']) && is_array($figma_data['document']['children'])) {
             foreach ($figma_data['document']['children'] as $page) {
                 $image_node_ids = array_merge($image_node_ids, $parser->collect_image_node_ids($page));
             }
@@ -219,7 +238,7 @@ final class AHM_Figma_Admin
 
         // 3. Configure parser with media references and run layout transformation
         $parser->set_image_map($image_map);
-        $elementor_data = $parser->parse($figma_data);
+        $elementor_data = $parser->parse($figma_data, $node_id);
 
         if (empty($elementor_data)) {
             wp_send_json_error(['message' => __('No valid top-level Figma frames found to convert.', 'ahm-core')]);

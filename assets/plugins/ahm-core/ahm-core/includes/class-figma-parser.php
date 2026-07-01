@@ -24,14 +24,28 @@ class Figma_Parser {
      * Parse the Figma node tree.
      *
      * @param array $figma_data Raw JSON file data from Figma API
+     * @param string $node_id Optional. Specific node ID to parse
      * @return array Elementor array structure
      */
-    public function parse( $figma_data ) {
+    public function parse( $figma_data, $node_id = '' ) {
+        $elementor_data = [];
+
+        // If a specific node ID was requested, process that node directly
+        if ( ! empty( $node_id ) && isset( $figma_data['nodes'][ $node_id ]['document'] ) ) {
+            $target_node = $figma_data['nodes'][ $node_id ]['document'];
+            // Process the target node if it is a container type
+            if ( in_array( $target_node['type'], ['FRAME', 'GROUP', 'SECTION', 'COMPONENT', 'COMPONENT_SET'] ) ) {
+                $container = $this->parse_node( $target_node, null, true );
+                if ( $container ) {
+                    $elementor_data[] = $container;
+                }
+            }
+            return $elementor_data;
+        }
+
         if ( ! isset( $figma_data['document']['children'] ) ) {
             return [];
         }
-
-        $elementor_data = [];
 
         // Search for Top-Level Frames in the first Page
         $first_page = $figma_data['document']['children'][0] ?? null;
@@ -58,9 +72,10 @@ class Figma_Parser {
      * @param array $node
      * @param array|null $parent_box Bounding box of the parent frame
      * @param bool $is_parent_auto_layout Whether the parent uses Auto Layout
+     * @param string $parent_direction 'column' or 'row'
      * @return array|null Elementor element representation
      */
-    private function parse_node( $node, $parent_box = null, $is_parent_auto_layout = true ) {
+    private function parse_node( $node, $parent_box = null, $is_parent_auto_layout = true, $parent_direction = 'column' ) {
         // Check if node is visible
         if ( isset( $node['visible'] ) && ! $node['visible'] ) {
             return null;
@@ -85,11 +100,17 @@ class Figma_Parser {
                 $el_type = 'container';
                 $settings = $this->get_container_settings( $node );
 
+                // Determine direction of this container to pass to children
+                $direction = 'column';
+                if ( isset( $node['layoutMode'] ) && $node['layoutMode'] === 'HORIZONTAL' ) {
+                    $direction = 'row';
+                }
+
                 // Recursively process children
                 if ( isset( $node['children'] ) ) {
                     foreach ( $node['children'] as $child ) {
                         // Pass current box and layout style down
-                        $parsed_child = $this->parse_node( $child, $current_box, $is_auto_layout );
+                        $parsed_child = $this->parse_node( $child, $current_box, $is_auto_layout, $direction );
                         if ( $parsed_child ) {
                             $elements[] = $parsed_child;
                         }
@@ -125,8 +146,51 @@ class Figma_Parser {
                 return null; // Skip unsupported nodes
         }
 
-        // Fallback positioning: If the parent was NOT an Auto Layout frame, position absolutely
-        if ( ! $is_parent_auto_layout && $parent_box && $current_box ) {
+        // Map Auto Layout Flex behaviors (Fill Container)
+        if ( $is_parent_auto_layout ) {
+            $is_fill_horizontal = false;
+            $is_fill_vertical = false;
+            
+            if ( isset( $node['layoutSizingHorizontal'] ) ) {
+                $is_fill_horizontal = $node['layoutSizingHorizontal'] === 'FILL';
+            } elseif ( isset( $node['layoutAlign'] ) && $parent_direction === 'column' ) {
+                $is_fill_horizontal = $node['layoutAlign'] === 'STRETCH';
+            } elseif ( isset( $node['layoutGrow'] ) && $parent_direction === 'row' ) {
+                $is_fill_horizontal = $node['layoutGrow'] === 1;
+            }
+
+            if ( isset( $node['layoutSizingVertical'] ) ) {
+                $is_fill_vertical = $node['layoutSizingVertical'] === 'FILL';
+            } elseif ( isset( $node['layoutAlign'] ) && $parent_direction === 'row' ) {
+                $is_fill_vertical = $node['layoutAlign'] === 'STRETCH';
+            } elseif ( isset( $node['layoutGrow'] ) && $parent_direction === 'column' ) {
+                $is_fill_vertical = $node['layoutGrow'] === 1;
+            }
+
+            $is_widget = $el_type === 'widget';
+            $prefix = $is_widget ? '_' : '';
+            
+            if ( $is_fill_horizontal ) {
+                if ( $parent_direction === 'row' ) {
+                    $settings[ $prefix . 'flex_grow' ] = '1';
+                } else {
+                    if ( $is_widget ) {
+                        $settings['width'] = '100'; // 100% width for widget
+                    } else {
+                        $settings['content_width'] = 'full';
+                        $settings['width'] = [ 'unit' => '%', 'size' => 100, 'sizes' => [] ];
+                    }
+                }
+            }
+            if ( $is_fill_vertical ) {
+                if ( $parent_direction === 'column' ) {
+                    $settings[ $prefix . 'flex_grow' ] = '1';
+                } else {
+                    $settings[ $prefix . 'align_self' ] = 'stretch';
+                }
+            }
+        } else if ( $parent_box && $current_box ) {
+            // Fallback positioning: If the parent was NOT an Auto Layout frame, position absolutely
             $rel_x = $current_box['x'] - $parent_box['x'];
             $rel_y = $current_box['y'] - $parent_box['y'];
 
@@ -149,6 +213,15 @@ class Figma_Parser {
                 'size' => $current_box['width'],
                 'sizes' => [],
             ];
+        }
+
+        // Map global opacity
+        if ( isset( $node['opacity'] ) && $node['opacity'] < 1 ) {
+            if ( $el_type === 'container' ) {
+                $settings['background_overlay_opacity'] = [ 'size' => $node['opacity'] ];
+            } else {
+                $settings['_opacity'] = [ 'size' => $node['opacity'] ];
+            }
         }
 
         // Setup the Elementor item payload
@@ -197,17 +270,37 @@ class Figma_Parser {
             }
         }
 
-        // 2. Background solid colors
+        // 2. Background solid colors and Images
         if ( isset( $node['fills'] ) && is_array( $node['fills'] ) ) {
             foreach ( $node['fills'] as $fill ) {
+                if ( isset( $fill['visible'] ) && ! $fill['visible'] ) {
+                    continue; // Skip hidden fills
+                }
+                
                 if ( $fill['type'] === 'SOLID' && isset( $fill['color'] ) ) {
                     $color = $fill['color'];
                     $r = round( $color['r'] * 255 );
                     $g = round( $color['g'] * 255 );
                     $b = round( $color['b'] * 255 );
                     $a = $fill['opacity'] ?? $color['a'] ?? 1;
-                    $settings['background_color'] = sprintf( 'rgba(%d, %d, %d, %f)', $r, $g, $b, $a );
-                    break;
+                    
+                    // Prioritize applying color as overlay if there's also an image (though Figma renders bottom-up)
+                    if ( isset( $settings['background_image'] ) ) {
+                        $settings['background_overlay_background'] = 'classic';
+                        $settings['background_overlay_color'] = sprintf( 'rgba(%d, %d, %d, %f)', $r, $g, $b, $a );
+                    } else {
+                        $settings['background_color'] = sprintf( 'rgba(%d, %d, %d, %f)', $r, $g, $b, $a );
+                    }
+                } elseif ( $fill['type'] === 'IMAGE' ) {
+                    $node_id = $node['id'];
+                    $image_url = $this->image_map[$node_id] ?? '';
+                    if ( ! empty( $image_url ) ) {
+                        $settings['background_image'] = [
+                            'url' => $image_url,
+                            'id'  => '',
+                        ];
+                        $settings['background_size'] = 'cover';
+                    }
                 }
             }
         }
@@ -277,20 +370,52 @@ class Figma_Parser {
         }
 
         // 7. Sizing (Min Height for Elementor containers instead of height)
+        // If 'is_fill_vertical' is true from parse_node, this fixed height shouldn't override it, but min_height is okay.
         if ( isset( $node['absoluteBoundingBox'] ) ) {
             $box = $node['absoluteBoundingBox'];
-            if ( isset( $box['width'] ) && $box['width'] > 0 ) {
-                $settings['width'] = [
-                    'unit' => 'px',
-                    'size' => $box['width'],
-                ];
+            // If the element is hugging its contents, its height/width are derived, but Figma API provides absolute width/height anyway.
+            // We should only set hard widths if it doesn't hug.
+            // Actually, we rely on Elementor to size naturally. We won't force widths unless needed.
+            // If it's Auto Layout, width/height might just be intrinsic.
+            // We only set width/height if it's NOT Auto Layout OR if the bounding box provides a constraint we can't derive.
+            // Wait, for Flexbox, Elementor sizing naturally handles hug. So skipping absolute width if Auto Layout is often better.
+            if ( !isset( $node['layoutMode'] ) || $node['layoutMode'] === 'NONE' ) {
+                if ( isset( $box['width'] ) && $box['width'] > 0 ) {
+                    $settings['width'] = [
+                        'unit' => 'px',
+                        'size' => $box['width'],
+                    ];
+                }
+                if ( isset( $box['height'] ) && $box['height'] > 0 ) {
+                    $settings['min_height'] = [
+                        'unit' => 'px',
+                        'size' => $box['height'],
+                        'sizes' => [],
+                    ];
+                }
             }
-            if ( isset( $box['height'] ) && $box['height'] > 0 ) {
-                $settings['min_height'] = [
-                    'unit' => 'px',
-                    'size' => $box['height'],
-                    'sizes' => [],
-                ];
+        }
+
+        // 8. Box Shadows (Effects)
+        if ( isset( $node['effects'] ) && is_array( $node['effects'] ) ) {
+            foreach ( $node['effects'] as $effect ) {
+                if ( $effect['type'] === 'DROP_SHADOW' && ( !isset($effect['visible']) || $effect['visible'] !== false ) ) {
+                    $color = $effect['color'];
+                    $r = round( $color['r'] * 255 );
+                    $g = round( $color['g'] * 255 );
+                    $b = round( $color['b'] * 255 );
+                    $a = $color['a'] ?? 1;
+                    
+                    $settings['box_shadow_box_shadow'] = [
+                        'horizontal' => $effect['offset']['x'] ?? 0,
+                        'vertical' => $effect['offset']['y'] ?? 0,
+                        'blur' => $effect['radius'] ?? 0,
+                        'spread' => $effect['spread'] ?? 0,
+                        'color' => sprintf( 'rgba(%d, %d, %d, %f)', $r, $g, $b, $a ),
+                    ];
+                    $settings['box_shadow_box_shadow_type'] = 'yes';
+                    break;
+                }
             }
         }
 
@@ -394,6 +519,12 @@ class Figma_Parser {
             }
             if ( isset( $style['textCase'] ) ) {
                 $settings['typography_text_transform'] = $this->map_text_case( $style['textCase'] );
+            }
+            if ( isset( $style['letterSpacing'] ) ) {
+                $settings['typography_letter_spacing'] = [
+                    'unit' => 'px',
+                    'size' => $style['letterSpacing'],
+                ];
             }
             if ( isset( $style['textAlignHorizontal'] ) ) {
                 $settings['align'] = strtolower( $style['textAlignHorizontal'] ); // left, center, right, justify

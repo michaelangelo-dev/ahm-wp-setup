@@ -28,14 +28,19 @@ class Figma_API {
      * Get the Figma file JSON structure.
      *
      * @param string $file_key
+     * @param string $node_id Optional. Specific node ID to fetch.
      * @return array|WP_Error
      */
-    public function get_file( $file_key ) {
+    public function get_file( $file_key, $node_id = '' ) {
         if ( empty( $this->token ) ) {
             return new WP_Error( 'missing_token', __( 'Figma Personal Access Token is missing.', 'ahm-core' ) );
         }
 
         $url = 'https://api.figma.com/v1/files/' . $file_key;
+        if ( ! empty( $node_id ) ) {
+            $url = add_query_arg( [ 'ids' => $node_id ], $url );
+        }
+
         $response = wp_remote_get( $url, [
             'headers' => [
                 'X-Figma-Token' => $this->token,
