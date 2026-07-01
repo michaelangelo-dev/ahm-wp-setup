@@ -36,6 +36,24 @@ set /p SITE_NAME="[STEP 1] Enter the Website Name (Folder Name): "
 set /p SITE_TITLE="[STEP 1] Enter the Site Title: "
 set /p SITE_TAGLINE="[STEP 1] Enter the Site Tagline: "
 
+set "ELEM_WIDTH="
+set "ELEM_PADDING="
+set "PAGE_LAYOUT_CHOICE="
+set /p ELEM_WIDTH="[STEP 1] Enter Elementor Content Width [e.g., 1140]: "
+set /p ELEM_PADDING="[STEP 1] Enter Container Padding (applied to all sides) [e.g., 10]: "
+echo [STEP 1] Choose Default Page Layout:
+echo 1) Theme (Default)
+echo 2) Elementor Canvas
+echo 3) Elementor Full Width
+set /p PAGE_LAYOUT_CHOICE="[STEP 1] Enter 1, 2, or 3 (default 1): "
+
+set "ELEM_LAYOUT=default"
+if "%PAGE_LAYOUT_CHOICE%"=="2" set "ELEM_LAYOUT=elementor_canvas"
+if "%PAGE_LAYOUT_CHOICE%"=="3" set "ELEM_LAYOUT=elementor_header_footer"
+
+set "ATOMIC_EDITOR_CHOICE="
+set /p ATOMIC_EDITOR_CHOICE="[STEP 1] Activate Elementor Atomic Editor? (Y/N) [default: N]: "
+
 :: 1. Folder Name: Stays exactly as entered (e.g., wp-test-automation)
 set "FOLDER_NAME=%SITE_NAME%"
 
@@ -261,6 +279,14 @@ echo.
 echo Enabling Elementor "Container" experiment...
 call wp elementor experiments activate container
 
+if /i "%ATOMIC_EDITOR_CHOICE%"=="Y" (
+    echo Enabling Elementor "Atomic Editor" experiment...
+    call wp elementor experiments activate e_opt_in_v4,e_atomic_elements
+) else (
+    echo Disabling Elementor "Atomic Editor" experiment...
+    call wp elementor experiments deactivate e_opt_in_v4,e_atomic_elements
+)
+
 echo Setting permalink structure to "Post name"...
 :: %%postname%% -> literal %postname% once the batch parser is done with it
 call wp rewrite structure "/%%%%postname%%%%/"
@@ -429,6 +455,15 @@ echo Configuring Elementor General Settings...
 call wp option update elementor_disable_color_schemes "yes"
 call wp option update elementor_disable_typography_schemes "yes"
 call wp option update elementor_cpt_support "[\"post\",\"page\",\"treatment\"]" --format=json
+
+echo.
+echo Applying Site Layout Settings (Width, Padding, Layout)...
+set "LAYOUT_HELPER=%SCRIPT_DIR%helpers\update-layout-settings.php"
+if exist "%LAYOUT_HELPER%" (
+    call wp eval-file "%LAYOUT_HELPER%" "%ELEM_WIDTH%" "%ELEM_PADDING%" "%ELEM_LAYOUT%" --user=admin
+) else (
+    echo [WARNING] Layout helper not found at "%LAYOUT_HELPER%". Skipping Layout Settings.
+)
 
 echo =========================================================================
 echo SETUP COMPLETE: CONFIGURATION SUCCESSFUL FOR "%SITE_NAME%"
