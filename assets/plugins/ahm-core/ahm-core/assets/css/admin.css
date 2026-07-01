@@ -1,0 +1,538 @@
+/**
+ * AHM Core — Admin Styles
+ *
+ * @package AHM_Core
+ */
+
+/* ============================================================
+   Layout & Tabs
+   ============================================================ */
+
+.ahm-wrap {
+    max-width: 900px;
+    margin-top: 20px;
+}
+
+.ahm-tabs {
+    margin-bottom: 0;
+}
+
+.ahm-tab-content {
+    padding-top: 20px;
+}
+
+.ahm-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+}
+
+.ahm-card h2 {
+    margin-top: 0;
+    padding-top: 0;
+    font-size: 1.15em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 12px;
+}
+
+/* ============================================================
+   Server Info Table
+   ============================================================ */
+
+.ahm-info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ahm-info-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.ahm-info-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================================
+   Badges
+   ============================================================ */
+
+.ahm-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+
+.ahm-badge--success {
+    background: #edfaef;
+    color: #00a32a;
+}
+
+.ahm-badge--error {
+    background: #fcf0f1;
+    color: #d63638;
+}
+
+/* ============================================================
+   Quality Slider
+   ============================================================ */
+
+.ahm-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 420px;
+}
+
+.ahm-range {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #dcdcde;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.ahm-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #2271b1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+.ahm-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #2271b1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+.ahm-range-output {
+    min-width: 38px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2271b1;
+    background: #f0f6fc;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+/* ============================================================
+   Warning text
+   ============================================================ */
+
+.ahm-warning {
+    color: #d63638;
+    font-weight: 500;
+}
+
+/* ============================================================
+   Progress Bar
+   ============================================================ */
+
+.ahm-progress {
+    margin-top: 18px;
+}
+
+.ahm-progress-bar-wrap {
+    width: 100%;
+    height: 28px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ahm-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #135e96);
+    border-radius: 4px;
+    transition: width .3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 36px;
+}
+
+.ahm-progress-text {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #50575e;
+}
+
+.ahm-progress-log {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    display: none;
+}
+
+.ahm-progress-log.has-entries {
+    display: block;
+}
+
+.ahm-log-entry--success { color: #00a32a; }
+.ahm-log-entry--error   { color: #d63638; }
+.ahm-log-entry--skip    { color: #996800; }
+
+/* ============================================================
+   Statistics Grid
+   ============================================================ */
+
+.ahm-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.ahm-stat {
+    text-align: center;
+    padding: 18px 10px;
+    background: #f6f7f7;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+}
+
+.ahm-stat__number {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1d2327;
+    line-height: 1.2;
+}
+
+.ahm-stat__number--success { color: #00a32a; }
+.ahm-stat__number--warning { color: #dba617; }
+
+.ahm-stat__label {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+/* ============================================================
+   Settings Table overrides
+   ============================================================ */
+
+.ahm-settings-table th {
+    width: 200px;
+    padding-top: 20px;
+}
+
+.ahm-settings-table td {
+    padding-top: 18px;
+}
+
+/* ============================================================
+   Cache Manager
+   ============================================================ */
+
+.ahm-btn-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: #2271b1;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.ahm-btn-clear:hover {
+    background: #135e96;
+    color: #fff;
+}
+
+.ahm-btn-clear:active {
+    background: #0a4b78;
+    color: #fff;
+}
+
+.ahm-btn-clear:disabled {
+    background: #a7aaad;
+    cursor: not-allowed;
+}
+
+.ahm-btn-clear .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 1;
+    color: inherit;
+}
+
+.ahm-cache-steps {
+    margin-top: 24px;
+}
+
+.ahm-cache-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background: #f6f7f7;
+    font-size: 13px;
+    transition: background .3s, border-color .3s;
+}
+
+.ahm-cache-step.is-active {
+    background: #fff;
+    border-color: #2271b1;
+}
+
+.ahm-cache-step.is-done {
+    background: #edfaef;
+    border-color: #00a32a;
+}
+
+.ahm-cache-step.is-error {
+    background: #fcf0f1;
+    border-color: #d63638;
+}
+
+.ahm-cache-step.is-skipped {
+    background: #fef8ee;
+    border-color: #dba617;
+}
+
+.ahm-step-icon {
+    font-size: 18px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.ahm-step-label {
+    flex: 1;
+    font-weight: 500;
+}
+
+.ahm-step-status {
+    font-size: 12px;
+    color: #646970;
+}
+
+/* ============================================================
+   Figma Importer Styles
+   ============================================================ */
+
+:root {
+    --figma-primary: #a259ff;
+    --figma-secondary: #f24e1e;
+    --figma-tertiary: #0acf83;
+    --figma-bg-dark: #1e1e1e;
+    --figma-bg-card: #ffffff;
+    --figma-text-primary: #2c3338;
+    --figma-text-muted: #646970;
+    --figma-border: #dcdcde;
+    --figma-radius: 12px;
+    --figma-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    --figma-gradient: linear-gradient(135deg, var(--figma-primary) 0%, var(--figma-secondary) 100%);
+}
+
+.figma-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--figma-text-primary);
+}
+
+.form-group input[type="url"],
+.form-group input[type="text"],
+.form-group input[type="password"] {
+    padding: 12px 16px;
+    font-size: 14px;
+    border: 1px solid var(--figma-border);
+    border-radius: 6px;
+    background: #fbfbfc;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: var(--figma-primary);
+    box-shadow: 0 0 0 3px rgba(162, 89, 255, 0.15);
+    background: #ffffff;
+    outline: none;
+}
+
+.input-desc {
+    color: var(--figma-text-muted);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.figma-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    align-self: flex-start;
+}
+
+.figma-btn-primary {
+    background: var(--figma-primary);
+    color: #ffffff;
+}
+
+.figma-btn-primary:hover:not(:disabled) {
+    background: #8b3be5;
+    box-shadow: 0 4px 12px rgba(162, 89, 255, 0.3);
+}
+
+.figma-btn:disabled {
+    background: #dcdcde;
+    color: #a7aaad;
+    cursor: not-allowed;
+}
+
+.spinner-loader {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    animation: figma-spin 0.8s linear infinite;
+}
+
+@keyframes figma-spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading .spinner-loader {
+    display: inline-block;
+}
+
+.loading .btn-text {
+    opacity: 0.8;
+}
+
+.figma-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    border-left: 4px solid transparent;
+}
+
+.figma-alert p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.figma-alert-warning {
+    background: #fff8e5;
+    border-left-color: #dba617;
+    color: #8c6700;
+}
+
+.figma-alert-warning a {
+    color: #8c6700;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.figma-alert-success {
+    background: #edfcf6;
+    border-left-color: var(--figma-tertiary);
+    color: #067c4e;
+}
+
+.figma-alert-error {
+    background: #fbeae5;
+    border-left-color: var(--figma-secondary);
+    color: #ba2100;
+}
+
+.figma-progress-wrapper {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f6f7f7;
+    border-radius: 8px;
+    border: 1px solid var(--figma-border);
+}
+
+.progress-bar-container {
+    height: 8px;
+    background: #dcdcde;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--figma-gradient);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.progress-status-text {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--figma-text-primary);
+}
+
+.figma-result-wrapper {
+    margin-top: 24px;
+}
