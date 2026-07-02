@@ -236,6 +236,7 @@
             resultWrapper.style.display = 'none'
 
             const geminiInput = document.getElementById('gemini-api-key')
+            const anthropicInput = document.getElementById('anthropic-api-key')
 
             const formData = new FormData()
             formData.append('action', 'ahm_figma_save_pat')
@@ -244,6 +245,10 @@
 
             if (geminiInput) {
                 formData.append('gemini_api_key', geminiInput.value)
+            }
+
+            if (anthropicInput) {
+                formData.append('anthropic_api_key', anthropicInput.value)
             }
 
             try {
@@ -333,9 +338,10 @@
             const importModeInput = document.getElementById('figma-import-mode')
             
             const importMode = importModeInput ? importModeInput.value : 'standard'
-            
-            if (importMode === 'ai') {
-                progressText.textContent = 'Generating screenshot and analyzing with Gemini AI (this may take up to 30 seconds)...'
+
+            if (importMode === 'ai_gemini' || importMode === 'ai_claude') {
+                const aiName = importMode === 'ai_claude' ? 'Claude' : 'Gemini'
+                progressText.textContent = `Generating screenshot and analyzing with ${aiName} AI (this may take up to 60 seconds)...`
             }
 
             const formData = new FormData()

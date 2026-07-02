@@ -39,6 +39,7 @@ final class AHM_Figma_Admin
     {
         $pat = get_option('figma_to_elementor_pat', '');
         $gemini_api_key = get_option('ahm_gemini_api_key', '');
+        $anthropic_api_key = get_option('ahm_anthropic_api_key', '');
         ?>
         <div class="ahm-card">
             <h2><?php esc_html_e('Figma to Elementor Importer', 'ahm-core'); ?></h2>
@@ -69,9 +70,10 @@ final class AHM_Figma_Admin
                     <label for="figma-import-mode"><?php esc_html_e('Import Mode', 'ahm-core'); ?></label>
                     <select id="figma-import-mode" style="padding: 12px 16px; font-size: 14px; border: 1px solid #dcdcde; border-radius: 6px; background: #fbfbfc; width: 100%; box-sizing: border-box; transition: all 0.3s ease;" <?php disabled(empty($pat)); ?>>
                         <option value="standard"><?php esc_html_e('Standard (Fast - Requires Auto Layout)', 'ahm-core'); ?></option>
-                        <option value="ai" <?php disabled(empty($gemini_api_key)); ?>><?php esc_html_e('AI Vision (Slow - Gemini AI)', 'ahm-core'); ?></option>
+                        <option value="ai_gemini" <?php disabled(empty($gemini_api_key)); ?>><?php esc_html_e('AI Vision - Google Gemini', 'ahm-core'); ?></option>
+                        <option value="ai_claude" <?php disabled(empty($anthropic_api_key)); ?>><?php esc_html_e('AI Vision - Anthropic Claude', 'ahm-core'); ?></option>
                     </select>
-                    <span class="input-desc"><?php esc_html_e('AI Vision requires a valid Gemini API Key and is much slower, but highly accurate for complex designs.', 'ahm-core'); ?></span>
+                    <span class="input-desc"><?php esc_html_e('AI Vision is slower but highly accurate for complex designs. Each option is available once its API key is saved below.', 'ahm-core'); ?></span>
                 </div>
 
                 <div class="figma-layout-settings-section" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
@@ -133,6 +135,12 @@ final class AHM_Figma_Admin
                     <span class="input-desc"><a href="https://aistudio.google.com/app/apikey" target="_blank"><?php esc_html_e('Get a free API key from Google AI Studio', 'ahm-core'); ?></a></span>
                 </div>
 
+                <div class="form-group">
+                    <label for="anthropic-api-key"><?php esc_html_e('Anthropic (Claude) API Key (Optional, for AI Vision Import)', 'ahm-core'); ?></label>
+                    <input type="password" id="anthropic-api-key" value="<?php echo esc_attr($anthropic_api_key); ?>" placeholder="<?php esc_attr_e('sk-ant-...', 'ahm-core'); ?>">
+                    <span class="input-desc"><a href="https://console.anthropic.com/settings/keys" target="_blank"><?php esc_html_e('Get an API key from the Anthropic Console', 'ahm-core'); ?></a></span>
+                </div>
+
                 <button type="submit" class="figma-btn figma-btn-primary" id="btn-save-settings">
                     <span class="btn-text"><?php esc_html_e('Save Token', 'ahm-core'); ?></span>
                     <span class="spinner-loader"></span>
@@ -156,9 +164,11 @@ final class AHM_Figma_Admin
 
         $pat = isset($_POST['pat']) ? sanitize_text_field(wp_unslash($_POST['pat'])) : '';
         $gemini_api_key = isset($_POST['gemini_api_key']) ? sanitize_text_field(wp_unslash($_POST['gemini_api_key'])) : '';
+        $anthropic_api_key = isset($_POST['anthropic_api_key']) ? sanitize_text_field(wp_unslash($_POST['anthropic_api_key'])) : '';
 
         update_option('figma_to_elementor_pat', $pat);
         update_option('ahm_gemini_api_key', $gemini_api_key);
+        update_option('ahm_anthropic_api_key', $anthropic_api_key);
 
         wp_send_json_success(['message' => __('Token saved successfully!', 'ahm-core')]);
     }
@@ -210,6 +220,7 @@ final class AHM_Figma_Admin
         $zero_padding   = isset($_POST['zero_padding']) && $_POST['zero_padding'] === 'true';
         $default_layout = isset($_POST['default_layout']) ? sanitize_text_field(wp_unslash($_POST['default_layout'])) : 'elementor_header_footer';
         $import_mode    = isset($_POST['import_mode']) ? sanitize_text_field(wp_unslash($_POST['import_mode'])) : 'standard';
+        $is_ai          = in_array($import_mode, ['ai_gemini', 'ai_claude'], true);
 
         if (! $file_key) {
             wp_send_json_error(['message' => __('Invalid Figma URL. Please ensure it contains a valid design/file key.', 'ahm-core')]);
@@ -236,7 +247,7 @@ final class AHM_Figma_Admin
         // the screenshot, so skip the sideload work entirely in AI mode.
         $image_map = [];
         $image_node_ids = [];
-        if ($import_mode !== 'ai') {
+        if (! $is_ai) {
             if (!empty($node_id) && isset($figma_data['nodes'][$node_id]['document'])) {
                 $image_node_ids = $parser->collect_image_node_ids($figma_data['nodes'][$node_id]['document']);
             } elseif (isset($figma_data['document']['children']) && is_array($figma_data['document']['children'])) {
@@ -261,14 +272,22 @@ final class AHM_Figma_Admin
         }
 
         // 3. Generate Layout Data
-        if ($import_mode === 'ai') {
-            require_once __DIR__ . '/class-gemini-api.php';
-            $gemini_api_key = get_option('ahm_gemini_api_key', '');
-            if (empty($gemini_api_key)) {
-                wp_send_json_error(['message' => __('Gemini API Key is missing. Please save it in the settings below.', 'ahm-core')]);
-            }
+        if ($is_ai) {
             if (empty($node_id)) {
                 wp_send_json_error(['message' => __('AI Vision mode requires a specific node ID in the Figma URL.', 'ahm-core')]);
+            }
+
+            // Resolve the selected AI provider and its API key up front.
+            if ($import_mode === 'ai_claude') {
+                $api_key = get_option('ahm_anthropic_api_key', '');
+                if (empty($api_key)) {
+                    wp_send_json_error(['message' => __('Anthropic (Claude) API Key is missing. Please save it in the settings below.', 'ahm-core')]);
+                }
+            } else {
+                $api_key = get_option('ahm_gemini_api_key', '');
+                if (empty($api_key)) {
+                    wp_send_json_error(['message' => __('Gemini API Key is missing. Please save it in the settings below.', 'ahm-core')]);
+                }
             }
 
             // Get image of the entire node
@@ -282,11 +301,20 @@ final class AHM_Figma_Admin
                 wp_send_json_error(['message' => __('Failed to fetch a valid screenshot from Figma.', 'ahm-core')]);
             }
 
-            $gemini = new Gemini_API($gemini_api_key);
-            $parsed_elements = $gemini->generate_elementor_layout($screenshot_url, $figma_data['nodes'][$node_id] ?? []);
+            $node_json = $figma_data['nodes'][$node_id] ?? [];
+
+            if ($import_mode === 'ai_claude') {
+                require_once __DIR__ . '/class-claude-api.php';
+                $provider = new Claude_API($api_key);
+            } else {
+                require_once __DIR__ . '/class-gemini-api.php';
+                $provider = new Gemini_API($api_key);
+            }
+
+            $parsed_elements = $provider->generate_elementor_layout($screenshot_url, $node_json);
 
             if (is_wp_error($parsed_elements)) {
-                wp_send_json_error(['message' => sprintf(__('Gemini AI Error: %s', 'ahm-core'), $parsed_elements->get_error_message())]);
+                wp_send_json_error(['message' => sprintf(__('AI Vision Error: %s', 'ahm-core'), $parsed_elements->get_error_message())]);
             }
         } else {
             // Standard Parser Mode

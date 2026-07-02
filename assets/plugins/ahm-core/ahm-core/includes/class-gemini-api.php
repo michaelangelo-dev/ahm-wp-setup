@@ -10,7 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+require_once __DIR__ . '/trait-ahm-elementor-sanitizer.php';
+
 class Gemini_API {
+    use AHM_Elementor_Sanitizer;
+
     private string $api_key;
     // Ordered by preference: highest fidelity first, cheaper/broader models as
     // fallbacks. The request loop breaks on the first model that returns 200,
@@ -154,65 +158,12 @@ class Gemini_API {
             return new WP_Error( 'invalid_json_generation', __( 'Gemini failed to output valid Elementor JSON.', 'ahm-core' ) );
         }
 
-        // Gemini may return the layout in a few shapes: a top-level list of elements,
-        // a single element object, or a wrapper like {"elements": [...]}. Normalize to a list.
-        if ( isset( $elementor_data['elements'] ) && is_array( $elementor_data['elements'] ) && ! isset( $elementor_data['elType'] ) ) {
-            $elementor_data = $elementor_data['elements'];
-        } elseif ( isset( $elementor_data['elType'] ) || isset( $elementor_data['widgetType'] ) ) {
-            $elementor_data = [ $elementor_data ];
-        }
-
-        $elementor_data = $this->sanitize_elementor_tree( $elementor_data );
+        $elementor_data = $this->normalize_layout( $elementor_data );
 
         if ( empty( $elementor_data ) ) {
             return new WP_Error( 'invalid_json_generation', __( 'Gemini returned an empty or unusable layout.', 'ahm-core' ) );
         }
 
         return $elementor_data;
-    }
-
-    /**
-     * Recursively normalize Gemini output into the exact element shape Elementor expects.
-     *
-     * Guarantees every element has a fresh unique id, a valid elType, a settings array,
-     * and the correct child key (elements for containers, widgetType for widgets) — matching
-     * what the deterministic Figma_Parser produces so both import modes yield renderable pages.
-     *
-     * @param array $elements Raw element list from Gemini.
-     * @return array Sanitized Elementor element list.
-     */
-    private function sanitize_elementor_tree( array $elements ): array {
-        $clean = [];
-
-        foreach ( $elements as $element ) {
-            if ( ! is_array( $element ) ) {
-                continue;
-            }
-
-            // Infer type: explicit elType wins, otherwise presence of widgetType implies a widget.
-            $el_type = $element['elType'] ?? ( isset( $element['widgetType'] ) ? 'widget' : 'container' );
-            if ( ! in_array( $el_type, [ 'container', 'widget' ], true ) ) {
-                $el_type = isset( $element['widgetType'] ) ? 'widget' : 'container';
-            }
-
-            // Always regenerate IDs — Gemini's are unreliable and may collide.
-            $node = [
-                'id'       => wp_generate_uuid4(),
-                'elType'   => $el_type,
-                'settings' => ( isset( $element['settings'] ) && is_array( $element['settings'] ) ) ? $element['settings'] : [],
-            ];
-
-            if ( 'widget' === $el_type ) {
-                $node['widgetType'] = ! empty( $element['widgetType'] ) ? sanitize_key( $element['widgetType'] ) : 'heading';
-            } else {
-                // Accept either 'elements' (Elementor) or 'children' (common Gemini slip).
-                $children = $element['elements'] ?? $element['children'] ?? [];
-                $node['elements'] = is_array( $children ) ? $this->sanitize_elementor_tree( $children ) : [];
-            }
-
-            $clean[] = $node;
-        }
-
-        return $clean;
     }
 }
