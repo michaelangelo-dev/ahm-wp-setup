@@ -235,10 +235,16 @@
             btn.disabled = true
             resultWrapper.style.display = 'none'
 
+            const geminiInput = document.getElementById('gemini-api-key')
+
             const formData = new FormData()
             formData.append('action', 'ahm_figma_save_pat')
             formData.append('nonce', ahmAdmin.figmaNonce)
             formData.append('pat', patInput.value)
+
+            if (geminiInput) {
+                formData.append('gemini_api_key', geminiInput.value)
+            }
 
             try {
                 const response = await fetch(ahmAdmin.ajaxUrl, {
@@ -324,6 +330,13 @@
             const contentWidthInput = document.getElementById('figma-content-width')
             const zeroPaddingInput = document.getElementById('figma-zero-padding')
             const defaultLayoutInput = document.getElementById('figma-default-layout')
+            const importModeInput = document.getElementById('figma-import-mode')
+            
+            const importMode = importModeInput ? importModeInput.value : 'standard'
+            
+            if (importMode === 'ai') {
+                progressText.textContent = 'Generating screenshot and analyzing with Gemini AI (this may take up to 30 seconds)...'
+            }
 
             const formData = new FormData()
             formData.append('action', 'ahm_figma_import')
@@ -333,6 +346,7 @@
             formData.append('content_width', contentWidthInput ? contentWidthInput.value : '1140')
             formData.append('zero_padding', zeroPaddingInput ? zeroPaddingInput.checked : 'true')
             formData.append('default_layout', defaultLayoutInput ? defaultLayoutInput.value : 'elementor_header_footer')
+            formData.append('import_mode', importMode)
 
             try {
                 const response = await fetch(ahmAdmin.ajaxUrl, {

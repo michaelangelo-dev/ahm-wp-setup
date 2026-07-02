@@ -38,6 +38,7 @@ final class AHM_Figma_Admin
     public function render_tab(): void
     {
         $pat = get_option('figma_to_elementor_pat', '');
+        $gemini_api_key = get_option('ahm_gemini_api_key', '');
         ?>
         <div class="ahm-card">
             <h2><?php esc_html_e('Figma to Elementor Importer', 'ahm-core'); ?></h2>
@@ -62,6 +63,15 @@ final class AHM_Figma_Admin
                 <div class="form-group">
                     <label for="figma-page-title"><?php esc_html_e('Imported Page Title', 'ahm-core'); ?></label>
                     <input type="text" id="figma-page-title" value="Figma Import Page" required <?php disabled(empty($pat)); ?>>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="figma-import-mode"><?php esc_html_e('Import Mode', 'ahm-core'); ?></label>
+                    <select id="figma-import-mode" style="padding: 12px 16px; font-size: 14px; border: 1px solid #dcdcde; border-radius: 6px; background: #fbfbfc; width: 100%; box-sizing: border-box; transition: all 0.3s ease;" <?php disabled(empty($pat)); ?>>
+                        <option value="standard"><?php esc_html_e('Standard (Fast - Requires Auto Layout)', 'ahm-core'); ?></option>
+                        <option value="ai" <?php disabled(empty($gemini_api_key)); ?>><?php esc_html_e('AI Vision (Slow - Gemini AI)', 'ahm-core'); ?></option>
+                    </select>
+                    <span class="input-desc"><?php esc_html_e('AI Vision requires a valid Gemini API Key and is much slower, but highly accurate for complex designs.', 'ahm-core'); ?></span>
                 </div>
 
                 <div class="figma-layout-settings-section" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
@@ -116,6 +126,12 @@ final class AHM_Figma_Admin
                     <label for="figma-pat"><?php esc_html_e('Personal Access Token (PAT)', 'ahm-core'); ?></label>
                     <input type="password" id="figma-pat" value="<?php echo esc_attr($pat); ?>" placeholder="<?php esc_attr_e('figd_...', 'ahm-core'); ?>" required>
                 </div>
+                
+                <div class="form-group">
+                    <label for="gemini-api-key"><?php esc_html_e('Google Gemini API Key (Optional, for AI Vision Import)', 'ahm-core'); ?></label>
+                    <input type="password" id="gemini-api-key" value="<?php echo esc_attr($gemini_api_key); ?>" placeholder="<?php esc_attr_e('AIza...', 'ahm-core'); ?>">
+                    <span class="input-desc"><a href="https://aistudio.google.com/app/apikey" target="_blank"><?php esc_html_e('Get a free API key from Google AI Studio', 'ahm-core'); ?></a></span>
+                </div>
 
                 <button type="submit" class="figma-btn figma-btn-primary" id="btn-save-settings">
                     <span class="btn-text"><?php esc_html_e('Save Token', 'ahm-core'); ?></span>
@@ -139,7 +155,10 @@ final class AHM_Figma_Admin
         }
 
         $pat = isset($_POST['pat']) ? sanitize_text_field(wp_unslash($_POST['pat'])) : '';
+        $gemini_api_key = isset($_POST['gemini_api_key']) ? sanitize_text_field(wp_unslash($_POST['gemini_api_key'])) : '';
+
         update_option('figma_to_elementor_pat', $pat);
+        update_option('ahm_gemini_api_key', $gemini_api_key);
 
         wp_send_json_success(['message' => __('Token saved successfully!', 'ahm-core')]);
     }
@@ -190,6 +209,7 @@ final class AHM_Figma_Admin
         $content_width  = isset($_POST['content_width']) ? intval($_POST['content_width']) : 1140;
         $zero_padding   = isset($_POST['zero_padding']) && $_POST['zero_padding'] === 'true';
         $default_layout = isset($_POST['default_layout']) ? sanitize_text_field(wp_unslash($_POST['default_layout'])) : 'elementor_header_footer';
+        $import_mode    = isset($_POST['import_mode']) ? sanitize_text_field(wp_unslash($_POST['import_mode'])) : 'standard';
 
         if (! $file_key) {
             wp_send_json_error(['message' => __('Invalid Figma URL. Please ensure it contains a valid design/file key.', 'ahm-core')]);
@@ -211,42 +231,76 @@ final class AHM_Figma_Admin
             wp_send_json_error(['message' => sprintf(__('Figma API Error: %s', 'ahm-core'), $figma_data->get_error_message())]);
         }
 
-        // 2. Identify Image Nodes and sideload images
+        // 2. Identify Image Nodes and sideload images.
+        // Only the standard parser consumes the image map; AI Vision recreates images from
+        // the screenshot, so skip the sideload work entirely in AI mode.
+        $image_map = [];
         $image_node_ids = [];
-        if (!empty($node_id) && isset($figma_data['nodes'][$node_id]['document'])) {
-            $image_node_ids = $parser->collect_image_node_ids($figma_data['nodes'][$node_id]['document']);
-        } elseif (isset($figma_data['document']['children']) && is_array($figma_data['document']['children'])) {
-            foreach ($figma_data['document']['children'] as $page) {
-                $image_node_ids = array_merge($image_node_ids, $parser->collect_image_node_ids($page));
+        if ($import_mode !== 'ai') {
+            if (!empty($node_id) && isset($figma_data['nodes'][$node_id]['document'])) {
+                $image_node_ids = $parser->collect_image_node_ids($figma_data['nodes'][$node_id]['document']);
+            } elseif (isset($figma_data['document']['children']) && is_array($figma_data['document']['children'])) {
+                foreach ($figma_data['document']['children'] as $page) {
+                    $image_node_ids = array_merge($image_node_ids, $parser->collect_image_node_ids($page));
+                }
             }
         }
 
-        $image_map = [];
         if (! empty($image_node_ids)) {
             $image_urls = $api->get_image_urls($file_key, $image_node_ids);
             if (! is_wp_error($image_urls)) {
-                foreach ($image_urls as $node_id => $download_url) {
+                foreach ($image_urls as $n_id => $download_url) {
                     if (! empty($download_url)) {
-                        $sideload_result = $importer->sideload_image($download_url, sprintf(__('Figma Node %s Image', 'ahm-core'), $node_id));
+                        $sideload_result = $importer->sideload_image($download_url, sprintf(__('Figma Node %s Image', 'ahm-core'), $n_id));
                         if (! is_wp_error($sideload_result)) {
-                            $image_map[$node_id] = $sideload_result['url'];
+                            $image_map[$n_id] = $sideload_result['url'];
                         }
                     }
                 }
             }
         }
 
-        // 3. Configure parser with media references and run layout transformation
-        $parser->set_image_map($image_map);
-        $elementor_data = $parser->parse($figma_data, $node_id);
+        // 3. Generate Layout Data
+        if ($import_mode === 'ai') {
+            require_once __DIR__ . '/class-gemini-api.php';
+            $gemini_api_key = get_option('ahm_gemini_api_key', '');
+            if (empty($gemini_api_key)) {
+                wp_send_json_error(['message' => __('Gemini API Key is missing. Please save it in the settings below.', 'ahm-core')]);
+            }
+            if (empty($node_id)) {
+                wp_send_json_error(['message' => __('AI Vision mode requires a specific node ID in the Figma URL.', 'ahm-core')]);
+            }
 
-        if (empty($elementor_data)) {
+            // Get image of the entire node
+            $screenshot_urls = $api->get_image_urls($file_key, [$node_id]);
+            if (is_wp_error($screenshot_urls)) {
+                wp_send_json_error(['message' => sprintf(__('Failed to fetch screenshot for AI: %s', 'ahm-core'), $screenshot_urls->get_error_message())]);
+            }
+
+            $screenshot_url = $screenshot_urls[$node_id] ?? '';
+            if (empty($screenshot_url)) {
+                wp_send_json_error(['message' => __('Failed to fetch a valid screenshot from Figma.', 'ahm-core')]);
+            }
+
+            $gemini = new Gemini_API($gemini_api_key);
+            $parsed_elements = $gemini->generate_elementor_layout($screenshot_url, $figma_data['nodes'][$node_id] ?? []);
+
+            if (is_wp_error($parsed_elements)) {
+                wp_send_json_error(['message' => sprintf(__('Gemini AI Error: %s', 'ahm-core'), $parsed_elements->get_error_message())]);
+            }
+        } else {
+            // Standard Parser Mode
+            $parser->set_image_map($image_map);
+            $parsed_elements = $parser->parse($figma_data, $node_id);
+        }
+
+        if (empty($parsed_elements)) {
             wp_send_json_error(['message' => __('No valid top-level Figma frames found to convert.', 'ahm-core')]);
         }
 
         // 4. Import mapping to Elementor template/page metadata and apply global settings
         $importer->update_global_settings($content_width, $zero_padding, $default_layout);
-        $post_id = $importer->import_layout($elementor_data, $page_title, 'page', $default_layout);
+        $post_id = $importer->import_layout($parsed_elements, $page_title, 'page', $default_layout);
         if (is_wp_error($post_id)) {
             wp_send_json_error(['message' => sprintf(__('Import failed: %s', 'ahm-core'), $post_id->get_error_message())]);
         }
