@@ -16,6 +16,7 @@
             // this.slidePauseOnLightbox()
             // this.imageCarousel()
             // this.tocOverride()
+            // this.observeOthersDropdown()
         },
 
         handleScroll: function () {
@@ -427,7 +428,69 @@
                     })
                 }
             })
-        }
+        },
+
+        observeOthersDropdown: function () {
+            // Map the select element selector to the dependent "Other" field selector
+            const fieldsMap = {
+                // '#form-field-field_b9ddd79': '.elementor-field-group-field_786199a'
+            }
+
+            const toggleOtherField = (selectElement, otherElement) => {
+                const otherWrapper = otherElement.closest('.elementor-field-group') || otherElement
+                const otherWrapperField = otherWrapper.querySelector('input[type="text"]')
+                const isOthersSelected = selectElement.value === 'Others' || selectElement.value === 'others'
+
+                if (isOthersSelected) {
+                    otherWrapper.style.display = 'block'
+                    otherWrapperField.setAttribute('required', 'required')
+                    otherWrapperField.setAttribute('aria-required', 'true')
+                } else {
+                    otherWrapper.style.display = 'none'
+                    otherWrapperField.removeAttribute('required')
+                    otherWrapperField.removeAttribute('aria-required')
+                }
+            }
+
+            const setupFields = () => {
+                Object.entries(fieldsMap).forEach(([selectSelector, otherSelector]) => {
+                    const selectElement = document.querySelector(selectSelector)
+                    const otherElement = document.querySelector(otherSelector)
+
+                    if (selectElement && otherElement) {
+                        toggleOtherField(selectElement, otherElement)
+
+                        if (!selectElement.dataset.othersBound) {
+                            selectElement.addEventListener('change', () => {
+                                toggleOtherField(selectElement, otherElement)
+                            })
+                            selectElement.dataset.othersBound = 'true'
+                        }
+                    }
+                })
+            }
+
+            const targetNode = document.body
+            const observerConfig = { childList: true, subtree: true }
+
+            const callback = (mutationsList) => {
+                let shouldCheck = false
+                for (const mutation of mutationsList) {
+                    if (mutation.addedNodes.length > 0) {
+                        shouldCheck = true
+                        break
+                    }
+                }
+                if (shouldCheck) {
+                    setupFields()
+                }
+            }
+
+            const observer = new MutationObserver(callback)
+            observer.observe(targetNode, observerConfig)
+
+            setupFields()
+        },
     }
 
     document.addEventListener('DOMContentLoaded', () => {
