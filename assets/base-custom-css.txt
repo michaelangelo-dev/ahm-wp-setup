@@ -171,6 +171,10 @@ form .elementor-field-type-tel.intlTelInput-initiated input[type="tel"] {
     .section-container.section-container--block-64 {
         --padding-block: 64px;
     }
+
+    .lg-flex-auto {
+        flex: 1 1 auto;
+    }
 }
 
 @media screen and (min-width: 768px) {
