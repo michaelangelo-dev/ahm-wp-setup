@@ -157,7 +157,7 @@ echo.
 echo WordPress core is in place.
 echo.
 echo Creating wp-config.php file...
-call wp core config --dbname=%DB_NAME% --dbuser=root --dbpass=admin123
+call wp core config --dbname=%DB_NAME% --dbuser=root --dbpass=
 if %ERRORLEVEL% neq 0 (
     echo Error generating wp-config.php.
     exit /b
@@ -223,11 +223,14 @@ if exist "%PLUGIN_AHM_CORE_ZIP%" (
     echo Warning: AHM Core zip not found at "%PLUGIN_AHM_CORE_ZIP%". Skipping.
 )
 
+:: Add SkipNovamira label below (for future)
+goto :SkipNovamira
 if exist "%PLUGIN_NOVAMIRA%" (
     call wp plugin install "%PLUGIN_NOVAMIRA%" --activate
 ) else (
     echo Warning: Novamira AI WordPress zip not found at "%PLUGIN_NOVAMIRA%". Skipping.
 )
+:SkipNovamira
 
 echo.
 echo Installing additional repository plugins (Deactivated)...

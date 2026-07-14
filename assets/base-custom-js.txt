@@ -138,33 +138,57 @@
             document.addEventListener('submit', function(event) {
                 const form = event.target
 
-                if (! form.classList.contains('elementor-form')) return
+                if (!form || !form.classList.contains('elementor-form')) return
+
+                const button = form.querySelector('.elementor-button[type="submit"]')
+                if (button) {
+                    button.classList.add('is-loading')
+                    button.disabled = true
+                }
 
                 const observer = new MutationObserver(function(mutations, observerInstance) {
-                    const successMessage = form.querySelector('.elementor-message-success')
+                    let shouldStopSpinner = false
 
-                    if (successMessage) {
-                        const button = form.querySelector('.elementor-button[type="submit"]')
+                    for (const mutation of mutations) {
+                        if (mutation.type === 'childList') {
+                            mutation.addedNodes.forEach(node => {
+                                if (node.nodeType === 1) {
+                                    if (
+                                        node.classList.contains('elementor-message') ||
+                                        node.querySelector('.elementor-message')
+                                    ) {
+                                        shouldStopSpinner = true
+                                    }
+                                }
+                            })
+                        }
+                        
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            const target = mutation.target
+                            const hasErrorClass = target.classList.contains('elementor-error')
+                            const hadErrorClass = mutation.oldValue ? mutation.oldValue.includes('elementor-error') : false
+                            
+                            if (hasErrorClass && !hadErrorClass) {
+                                shouldStopSpinner = true
+                            }
+                        }
+                    }
+
+                    if (shouldStopSpinner) {
                         if (button) {
                             button.classList.remove('is-loading')
                             button.disabled = false
                         }
-
                         observerInstance.disconnect()
                     }
                 })
 
-                observer.observe(form, { childList: true, subtree: true })
-            })
-
-            const forms = document.querySelectorAll('.elementor-form')
-            forms.forEach(form => {
-                form.addEventListener('submit', function() {
-                    const button = this.querySelector('button[type="submit"]')
-                    if (button) {
-                        button.classList.add('is-loading')
-                        button.setAttribute('disabled', 'true')
-                    }
+                observer.observe(form, { 
+                    childList: true, 
+                    subtree: true, 
+                    attributes: true, 
+                    attributeFilter: ['class'],
+                    attributeOldValue: true
                 })
             })
         },
