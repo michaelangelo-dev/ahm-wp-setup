@@ -252,3 +252,40 @@ function custom_share_url_func($atts)
     }
 }
 add_shortcode('custom_share_url', 'custom_share_url_func');
+
+/**
+ * 1. Block Author Enumeration (Security Fix)
+ */
+add_action('init', function () {
+    if (!is_admin() && isset($_REQUEST['author'])) {
+        wp_redirect(home_url(), 301);
+        exit;
+    }
+});
+
+/**
+ * 2. Smart Author Archives for Medical E-E-A-T (SEO Fix)
+ * Allows Doctors to have profiles, but returns a 404 for empty Dev accounts.
+ */
+add_action('template_redirect', function () {
+    if (is_author()) {
+        $author = get_queried_object();
+        
+        if ($author instanceof WP_User) {
+            // Count the number of published posts
+            $has_posts = count_user_posts($author->ID) > 0;
+            
+            // If the user has 0 posts (like a developer), block them with a 404
+            if (!$has_posts) {
+                global $wp_query;
+                $wp_query->set_404();
+                status_header(404);
+                nocache_headers();
+                
+                // $template = get_query_template('404');
+                // if ($template) include($template);
+                // exit;
+            }
+        }
+    }
+});
