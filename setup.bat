@@ -58,9 +58,12 @@ set /p ATOMIC_EDITOR_CHOICE="[STEP 1] Activate Elementor Atomic Editor? (Y/N) [d
 set "FOLDER_NAME=%SITE_NAME%"
 
 :: 2. Site URL: Uses the folder name with .test extension (e.g., http://wp-test-automation.test)
-set SITE_URL="https://%FOLDER_NAME%.test"
+set "SITE_URL=https://%FOLDER_NAME%.test"
 
-:: 3. Database Name: Converts hyphens to underscores (e.g., wp_test_automation)
+:: 3. Permalink Structure: Configured to /blogs/%postname%/
+set "PERMALINK_STRUCTURE=/blogs/%%%%postname%%%%/"
+
+:: 4. Database Name: Converts hyphens to underscores (e.g., wp_test_automation)
 set "DB_NAME=%FOLDER_NAME:-=_%"
 
 echo.
@@ -290,13 +293,14 @@ if /i "%ATOMIC_EDITOR_CHOICE%"=="Y" (
     call wp elementor experiments deactivate e_opt_in_v4,e_atomic_elements
 )
 
-echo Setting permalink structure to "Post name"...
-:: %%postname%% -> literal %postname% once the batch parser is done with it
-call wp rewrite structure "/%%%%postname%%%%/"
-if %ERRORLEVEL% neq 0 (
+echo Setting permalink structure to "/blogs/%%postname%%/"...
+call wp rewrite structure "%PERMALINK_STRUCTURE%"
+if !ERRORLEVEL! neq 0 (
     echo Warning: Could not set permalink structure.
 ) else (
-    echo Permalinks set to "Post name".
+    echo Permalinks set to "/blogs/%%postname%%/".
+    echo Flushing rewrite rules and writing .htaccess...
+    call wp rewrite flush --hard
 )
 
 echo.
@@ -444,14 +448,7 @@ if exist "%LOOP_JSON_FILE%" (
 :step9done
 echo.
 
-echo Setting permalink structure to "Post name" just to be sure...
-:: %%postname%% -> literal %postname% once the batch parser is done with it
-call wp rewrite structure "/%%%%postname%%%%/"
-if %ERRORLEVEL% neq 0 (
-    echo Warning: Could not set permalink structure.
-) else (
-    echo Permalinks set to "Post name".
-)
+
 
 :: Configure Elementor General Settings
 echo Configuring Elementor General Settings...

@@ -1,9 +1,48 @@
+/* ==========================================================================
+   STYLESHEET INDEX & TABLE OF CONTENTS
+   ==========================================================================
+   1. Global Design Tokens & Variables
+   2. Core Layout & Container Utilities
+   3. Elementor Widget Resets & Overrides
+      - Text Editor & Links
+      - Image / Icon Boxes
+      - Icon Lists
+      - Accordion / Details Component
+      - Navigation Menus (WordPress & Nested)
+      - Loop Grid Pagination
+   4. Access Control & Sizing Utilities
+   5. Component: Image Carousel (Swiper Fixes)
+   6. Component: Form Acceptance Checkbox
+   7. Component: International Telephone Input (intlTelInput)
+   8. Component: Button Variants & Hover States
+   9. Component: Global Video Tooltip
+   10. Responsive Breakpoints & Media Queries
+       - Desktop (>= 1025px)
+       - Tablet & Above (>= 768px)
+       - Mobile (<= 767px)
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. Global Design Tokens & Variables
+   ========================================================================== */
+
 :root {
+    /* Default Canvas & Padding Dimensions */
     --canvas-width: 100%;
     --padding-inline: 20px;
     --padding-block: 48px;
 }
 
+
+/* ==========================================================================
+   2. Core Layout & Container Utilities
+   ========================================================================== */
+
+/**
+ * Standardized Section Container
+ * Ensures uniform horizontal/vertical spacing and max-width bounds across pages.
+ */
 .section-container {
     max-width: var(--canvas-width) !important;
     margin-inline: auto !important;
@@ -11,29 +50,47 @@
     padding-block: var(--padding-block) !important;
 }
 
-/* Elementor utility resets */
+
+/* ==========================================================================
+   3. Elementor Widget Resets & Overrides
+   ========================================================================== */
+
+/* --- Text Editor Overrides --- */
+
+/* Remove unwanted bottom margin from the final paragraph in Elementor text editor */
 .elementor-widget-text-editor p:last-of-type {
     margin-bottom: 0 !important;
 }
 
+/* Strip default link styling inside text editor widgets */
 .elementor-widget-text-editor a {
     color: inherit;
     text-decoration: none;
 }
 
+/* --- Image & Icon Box Overrides --- */
+
+/* Remove default top margin on box titles for tight alignment */
 .elementor-widget-icon-box .elementor-icon-box-title,
 .elementor-widget-image-box .elementor-image-box-title {
     margin-top: 0 !important;
 }
 
+/* --- Icon List Resets --- */
+
+/* Reset default margins on SVG icons within list reset wrapper */
 .icon-list-reset .elementor-icon-list-icon svg {
     margin: 0 !important;
 }
 
+/* Remove default left padding from icon list text labels */
 .icon-list-reset .elementor-icon-list-text {
     padding-left: 0 !important;
 }
 
+/* --- Accordion / Details Reset --- */
+
+/* Adjust bottom border and padding when an accordion item is expanded */
 .accordion-reset details[open] > summary {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
@@ -41,76 +98,113 @@
     padding-bottom: 12px;
 }
 
+/* --- WordPress Nav Menu Resets --- */
+
+/* Container overflow and margin resets */
 .wp-menu-reset nav.elementor-nav-menu__container {
     margin-top: 0 !important;
     overflow: hidden;
 }
 
+/* Standardize vertical spacing for main menu items and sub-item dropdown links */
 .wp-menu-reset nav.elementor-nav-menu__container > ul > li > a,
 .wp-menu-reset nav.elementor-nav-menu__container > ul > li.menu-item-has-children ul a {
     padding-bottom: 32px !important;
 }
 
+/* Remove top padding on the first top-level menu item */
 .wp-menu-reset nav.elementor-nav-menu__container > ul > li:first-of-type > a {
     padding-top: 0 !important;
 }
 
+/* Remove bottom padding on the last top-level menu item */
 .wp-menu-reset nav.elementor-nav-menu__container > ul > li:last-of-type > a {
     padding-bottom: 0 !important;
 }
 
+/* Ensure sub-menu parents expand to full container width */
 .wp-menu-reset nav ul > li.menu-item-has-children {
     width: 100% !important;
 }
 
+/* Space parent item label and expand arrow evenly */
 .wp-menu-reset nav ul > li.menu-item-has-children > a {
     justify-content: space-between !important;
 }
 
+/* Constrain sub-arrow indicator icon dimensions */
 .wp-menu-reset nav ul > li.menu-item-has-children > a .sub-arrow svg {
     width: 18px !important;
     height: 18px !important;
 }
 
+/* --- Loop Grid Pagination Overrides --- */
+
+/* Reset margins on load-more buttons and completion messages at pagination end */
 .loop-grid-reset.e-load-more-pagination-end .e-loop__load-more,
 .loop-grid-reset.e-load-more-pagination-end .e-load-more-message {
     margin: 0 !important;
 }
 
+/* --- Nested Menu Component Overrides --- */
+
+/* Ensure active sub-menu content overlays correctly below parent trigger */
 .menu-reset .e-n-menu-content.e-active {
     padding-block-start: var(--n-menu-title-distance-from-content, 18px) !important;
     top: 100% !important;
 }
 
+
+/* ==========================================================================
+   4. Access Control & Sizing Utilities
+   ========================================================================== */
+
+/* Hide administrative elements from non-authenticated visitors */
 body:not(.logged-in) .admin-only {
     display: none !important;
 }
 
+/* Force list items in menus and icon lists to shrink wrap around their content */
 .wp-menu-fit nav ul li,
 .icon-list-fit ul li {
     width: fit-content;
 }
 
+
+/* ==========================================================================
+   5. Component: Image Carousel (Swiper Fixes)
+   ========================================================================== */
+
+/* Enable linear transition timing for continuous scrolling carousels */
 .image-carousel .swiper-wrapper {
     -webkit-transition-timing-function: linear !important;
     transition-timing-function: linear !important;
 }
 
+/* Center inner content container within each slide */
 .image-carousel .swiper-slide > div > .e-con-inner {
     justify-content: center;
 }
 
+/* Preserve original image aspect ratio and intrinsic sizing */
 .image-carousel .swiper-slide img {
     width: auto;
     height: auto;
 }
 
+
+/* ==========================================================================
+   6. Component: Custom Form Acceptance Checkbox
+   ========================================================================== */
+
+/* Flexbox container for form acceptance label and input */
 .form-has-acceptance .elementor-field-type-acceptance .elementor-field-option {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
+/* Base custom checkbox styling replacing native browser UI */
 .form-has-acceptance input[type="checkbox"].elementor-acceptance-field {
     -webkit-appearance: none;
     appearance: none;
@@ -128,6 +222,7 @@ body:not(.logged-in) .admin-only {
     transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
+/* Checked state: custom background color & embedded SVG checkmark icon */
 .form-has-acceptance input[type="checkbox"].elementor-acceptance-field:checked {
     background-color: #007bff !important;
     border-color: #007bff !important;
@@ -138,76 +233,200 @@ body:not(.logged-in) .admin-only {
     background-repeat: no-repeat;
 }
 
+
+/* ==========================================================================
+   7. Component: International Telephone Input (intlTelInput)
+   ========================================================================== */
+
+/* Stack phone input elements vertically after plugin initialization */
 form .elementor-field-type-tel.intlTelInput-initiated {
     flex-direction: column;
     align-items: flex-start;
 }
 
+/* Expand plugin container to full parent width */
 form .elementor-field-type-tel.intlTelInput-initiated .iti {
     width: 100%;
 }
 
+/* Add left padding to accommodate country flag dropdown inside field */
 form .elementor-field-type-tel.intlTelInput-initiated input[type="tel"] {
     padding-left: 52px !important;
 }
 
+
+/* ==========================================================================
+   8. Component: Button Variants & Hover States
+   ========================================================================== */
+
+/* Default button hover effect: subtle elevation bump */
+.elementor-widget-button a:hover {
+    transform: translateY(-2px);
+}
+
+/* --- Secondary Button Variant --- */
+.elementor-widget-button.btn-secondary a {
+    background-color: #16B0D6 !important;
+    border-color: #16B0D6 !important;
+}
+
+.elementor-widget-button.btn-secondary a:hover {
+    background-color: #14A2C4 !important;
+    border-color: #14A2C4 !important;
+}
+
+/* --- Outline Button Variant --- */
+.elementor-widget-button.btn-outline a {
+    color: #073B4C !important;
+    background-color: transparent !important;
+    border-color: #073B4C24 !important;
+}
+
+.elementor-widget-button.btn-outline a:hover {
+    border-color: #073B4C !important;
+}
+
+/* --- Ghost Button Variant --- */
+.elementor-widget-button.btn-ghost a {
+    color: #FFFFFF !important;
+    background-color: #FFFFFF1F !important;
+    border-color: #FFFFFF80 !important;
+}
+
+.elementor-widget-button.btn-ghost a:hover {
+    border-color: #FFFFFF !important;
+}
+
+
+/* ==========================================================================
+   9. Component: Global Video Tooltip
+   ========================================================================== */
+
+/* Pointer cursor on interactive trigger container */
+.video-tooltip-trigger {
+    cursor: pointer;
+}
+
+/* Ensure images within the trigger wrapper stay visible */
+.video-tooltip-trigger img,
+.video-tooltip-trigger picture {
+    display: block;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Tooltip floating card (positioned centered above trigger image) */
+.video-unavailable-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px) scale(0.95);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #ffffff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 
+        0 10px 25px -5px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.12);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 999;
+    transition: 
+        opacity 0.2s ease-in-out,
+        transform 0.2s ease-in-out,
+        visibility 0.2s;
+}
+
+/* Downward pointer triangle arrow on tooltip bottom */
+.video-unavailable-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0 6px;
+    border-style: solid;
+    border-color: rgba(15, 23, 42, 0.94) transparent transparent transparent;
+}
+
+/* Reveal state: triggered on hover OR via explicit .is-active class */
+.video-tooltip-trigger:hover .video-unavailable-tooltip,
+.video-unavailable-tooltip.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* Icon accent color inside tooltip */
+.video-unavailable-tooltip svg {
+    stroke: #16b0d6;
+    flex-shrink: 0;
+}
+
+
+/* ==========================================================================
+   10. Responsive Breakpoints & Media Queries
+   ========================================================================== */
+
+/* --- Desktop Styles (min-width: 1025px) --- */
 @media screen and (min-width: 1025px) {
     :root {
-        --padding-block: 104px;
+        --padding-block: 84px;
     }
 
-    .section-container.section-container--block-96 {
-        --padding-block: 96px;
-    }
-
+    /* Variant section block padding override */
     .section-container.section-container--block-80 {
         --padding-block: 80px;
     }
 
-    .section-container.section-container--block-72 {
-        --padding-block: 72px;
-    }
-
-    .section-container.section-container--block-64 {
-        --padding-block: 64px;
-    }
-
+    /* Flexbox stretch utility for large screens */
     .lg-flex-auto {
         flex: 1 1 auto;
     }
 }
 
+/* --- Tablet & Desktop Styles (min-width: 768px) --- */
 @media screen and (min-width: 768px) {
-    .section-container.section-container--1280 {
-        --canvas-width: calc(1280px + 40px); /* 20px for the padding inline */
+    /* Responsive Canvas Width Breakpoints */
+    .section-container {
+        --canvas-width: calc(1344px + 40px); /* Base canvas (1344px content + 40px inline padding) */
     }
 
-    .section-container.section-container--940 {
-        --canvas-width: calc(940px + 40px); /* 20px for the padding inline */
+    .section-container.section-container--1080 {
+        --canvas-width: calc(1080px + 40px); /* 1080px variant */
     }
 
-    .section-container.section-container--900 {
-        --canvas-width: calc(900px + 40px); /* 20px for the padding inline */
+    .section-container.section-container--880 {
+        --canvas-width: calc(880px + 40px);  /* 880px variant */
     }
 
-    .section-container.section-container--760 {
-        --canvas-width: calc(760px + 40px); /* 20px for the padding inline */
-    }
-
-    .section-container.section-container--640 {
-        --canvas-width: calc(640px + 40px); /* 20px for the padding inline */
+    .section-container.section-container--820 {
+        --canvas-width: calc(820px + 40px);  /* 820px variant */
     }
 }
 
+/* --- Mobile Styles (max-width: 767px) --- */
 @media screen and (max-width: 767px) {
+    /* Grid row height reset for mobile loop grids */
     .loop-grid-reset .elementor-loop-container.elementor-grid {
         grid-auto-rows: auto !important;
     }
 
+    /* Helper utility to reset grid row height */
     .grid-auto-rows {
         grid-auto-rows: auto !important;
     }
 
+    /* Mobile flexbox vertical stack helper */
     .sm-flex-col {
         display: flex !important;
         flex-direction: column !important;

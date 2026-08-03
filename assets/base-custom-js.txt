@@ -17,6 +17,7 @@
             // this.imageCarousel()
             // this.tocOverride()
             // this.observeOthersDropdown()
+            // this.initVideoTooltip()
         },
 
         handleScroll: function () {
@@ -256,7 +257,7 @@
         applyDateFieldSettings: function(el) {
             const fields = {
                 // Field for today or future dates
-                // 'form-field-field_40a88a8': { minDate: 'today', maxDate: null },
+                'form-field-prferred_date': { minDate: 'today', maxDate: null },
 
                 // Field for today or past dates
                 // 'form-field-field_3a2b774':   { minDate: null, maxDate: 'today' }
@@ -514,6 +515,93 @@
             observer.observe(targetNode, observerConfig)
 
             setupFields()
+        },
+        initVideoTooltip: function () {
+            const createTooltipElement = (triggerEl) => {
+                // If class is placed directly on an <img> tag, attach tooltip to parent container
+                const container = triggerEl.tagName.toLowerCase() === 'img' 
+                    ? triggerEl.parentElement 
+                    : triggerEl
+
+                const computedStyle = window.getComputedStyle(container)
+                if (computedStyle.position === 'static') {
+                    container.style.position = 'relative'
+                }
+
+                let tooltip = container.querySelector('.video-unavailable-tooltip')
+                if (!tooltip) {
+                    const customMsg = triggerEl.getAttribute('data-tooltip-msg') || container.getAttribute('data-tooltip-msg') || "Video isn't available yet"
+                    
+                    tooltip = document.createElement('div')
+                    tooltip.className = 'video-unavailable-tooltip'
+                    tooltip.setAttribute('role', 'status')
+                    tooltip.setAttribute('aria-live', 'polite')
+                    tooltip.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span class="tooltip-text">${customMsg}</span>
+                    `
+                    container.appendChild(tooltip)
+                }
+
+                return container
+            }
+
+            /**
+             * Pre-renders tooltips for all trigger elements on the page
+             */
+            const setupAllTooltips = () => {
+                const triggers = document.querySelectorAll('.video-tooltip-trigger')
+                triggers.forEach(el => createTooltipElement(el))
+            }
+
+            // 1. Pre-render immediately on load
+            setupAllTooltips()
+
+            // 2. Watch for dynamically added triggers (e.g. popups, lazy loaded sections)
+            const observer = new MutationObserver((mutations) => {
+                const hasAddedNodes = mutations.some(m => m.addedNodes.length > 0)
+                if (hasAddedNodes) setupAllTooltips()
+            })
+            observer.observe(document.body, { childList: true, subtree: true })
+
+            /**
+             * Persistent click handler with 3-second auto-dismiss
+             * @param {HTMLElement} triggerEl 
+             */
+            const showTooltip = (triggerEl) => {
+                const container = createTooltipElement(triggerEl)
+                const tooltip = container.querySelector('.video-unavailable-tooltip')
+
+                if (!tooltip) return
+
+                if (activeTimeouts.has(container)) {
+                    clearTimeout(activeTimeouts.get(container))
+                    tooltip.classList.remove('is-active')
+                    void tooltip.offsetWidth
+                }
+
+                tooltip.classList.add('is-active')
+
+                const timeoutId = setTimeout(() => {
+                    tooltip.classList.remove('is-active')
+                    activeTimeouts.delete(container)
+                }, 3000)
+
+                activeTimeouts.set(container, timeoutId)
+            }
+
+            // 3. Delegated click listener
+            document.body.addEventListener('click', (e) => {
+                const trigger = e.target.closest('.video-tooltip-trigger')
+                if (trigger) {
+                    e.preventDefault()
+                    showTooltip(trigger)
+                }
+            })
         },
     }
 
