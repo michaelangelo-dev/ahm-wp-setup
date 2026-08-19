@@ -60,6 +60,8 @@ if %ERRORLEVEL% neq 0 (
     echo Permalinks set to "Post name".
 )
 
+
+
 echo.
 echo Note: If your browser says "Not secure", you need to manually install
 echo       the Apache SSL certificate in the Laragon menu:

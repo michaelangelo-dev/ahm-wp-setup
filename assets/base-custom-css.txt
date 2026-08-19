@@ -1,29 +1,4 @@
 /* ==========================================================================
-   STYLESHEET INDEX & TABLE OF CONTENTS
-   ==========================================================================
-   1. Global Design Tokens & Variables
-   2. Core Layout & Container Utilities
-   3. Elementor Widget Resets & Overrides
-      - Text Editor & Links
-      - Image / Icon Boxes
-      - Icon Lists
-      - Accordion / Details Component
-      - Navigation Menus (WordPress & Nested)
-      - Loop Grid Pagination
-   4. Access Control & Sizing Utilities
-   5. Component: Image Carousel (Swiper Fixes)
-   6. Component: Form Acceptance Checkbox
-   7. Component: International Telephone Input (intlTelInput)
-   8. Component: Button Variants & Hover States
-   9. Component: Global Video Tooltip
-   10. Responsive Breakpoints & Media Queries
-       - Desktop (>= 1025px)
-       - Tablet & Above (>= 768px)
-       - Mobile (<= 767px)
-   ========================================================================== */
-
-
-/* ==========================================================================
    1. Global Design Tokens & Variables
    ========================================================================== */
 
@@ -260,8 +235,10 @@ form .elementor-field-type-tel.intlTelInput-initiated input[type="tel"] {
    ========================================================================== */
 
 /* Default button hover effect: subtle elevation bump */
-.elementor-widget-button a:hover {
-    transform: translateY(-2px);
+.elementor-widget-button a:hover,
+.e-loop__load-more .elementor-button:hover,
+.elementor-field-type-submit button:hover {
+    transform: translateY(-1px);
 }
 
 /* --- Secondary Button Variant --- */
