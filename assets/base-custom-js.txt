@@ -14,7 +14,6 @@
 
             // this.oddEvenGridItemGridItems()
             // this.slidePauseOnLightbox()
-            // this.imageCarousel()
             // this.tocOverride()
             // this.observeOthersDropdown()
             // this.initVideoTooltip()
@@ -257,7 +256,7 @@
         applyDateFieldSettings: function(el) {
             const fields = {
                 // Field for today or future dates
-                'form-field-prferred_date': { minDate: 'today', maxDate: null },
+                'form-field-preferred_date': { minDate: 'today', maxDate: null },
 
                 // Field for today or past dates
                 // 'form-field-field_3a2b774':   { minDate: null, maxDate: 'today' }
@@ -384,48 +383,6 @@
                 attributes: true,
                 attributeFilter: ['style', 'class', 'aria-hidden']
             })
-        },
-
-        imageCarousel: function () {
-            function applyCarousel() {
-                document.querySelectorAll('.image-carousel .swiper').forEach(function (el) {
-                    const swiper = el.swiper
-                    if (!swiper) return
-
-                    swiper.params.slidesPerView = 4
-                    swiper.params.spaceBetween = 28
-                    swiper.params.loop = true
-
-                    swiper.params.breakpoints = {
-                        768: {
-                            slidesPerView: 5
-                        },
-                        1025: {
-                            slidesPerView: 7,
-                            spaceBetween: 45
-                        },
-                        1440: {
-                            slidesPerView: 9,
-                            spaceBetween: 75
-                        }
-                    }
-
-                    swiper.update()
-                })
-            }
-
-            function initCarousel() {
-                const check = setInterval(function () {
-                    const swipers = document.querySelectorAll('.image-carousel .swiper')
-                    const ready = Array.from(swipers).some(el => el.swiper)
-                    if (!ready) return
-
-                    clearInterval(check)
-                    applyCarousel()
-                }, 200)
-            }
-
-            initCarousel()
         },
 
         tocOverride: function () {
