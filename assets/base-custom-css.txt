@@ -220,7 +220,6 @@ form .elementor-field-type-tel.intlTelInput-initiated {
 }
 
 /* Expand plugin container to full parent width */
-form .elementor-field-type-tel.intlTelInput-initiated,
 form .elementor-field-type-tel.intlTelInput-initiated .iti,
 form .elementor-field-type-tel.intlTelInput-initiated input {
     width: 100% !important;
