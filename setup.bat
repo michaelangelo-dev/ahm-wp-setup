@@ -172,7 +172,7 @@ call wp config set WP_AUTO_UPDATE_CORE false --raw
 if !ERRORLEVEL! neq 0 (
     echo [WARNING] Failed to set WP_AUTO_UPDATE_CORE in wp-config.php.
 ) else (
-    echo Core auto-updates set to manual (WP_AUTO_UPDATE_CORE = false).
+    echo Core auto-updates set to manual: WP_AUTO_UPDATE_CORE = false.
 )
 
 echo.
