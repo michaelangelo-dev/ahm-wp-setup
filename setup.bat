@@ -15,6 +15,7 @@ for %%I in ("%~dp0..") do set "WWW_DIR=%%~fI"
 :: Bundled assets shipped inside the wp-setup folder
 set "PLUGIN_PRO_ELEMENTS_ZIP=%SCRIPT_DIR%assets\plugins\pro-elements.zip"
 set "PLUGIN_AHM_CORE_ZIP=%SCRIPT_DIR%assets\plugins\ahm-core.zip"
+set "PLUGIN_AHM_PUBLISHER_ZIP=%SCRIPT_DIR%assets\plugins\ahm-publisher.zip"
 set "PLUGIN_NOVAMIRA=%SCRIPT_DIR%assets\plugins\novamira-1.7.1.zip"
 set "PLUGIN_RANK_MATH_PRO_ZIP=%SCRIPT_DIR%assets\plugins\seo-by-rank-math-pro.zip"
 set "PLUGIN_AIO_MIGRATION_ZIP=%SCRIPT_DIR%assets\plugins\All-In-One-WP-Migration-With-Import-master.zip"
@@ -166,6 +167,14 @@ if %ERRORLEVEL% neq 0 (
     exit /b
 )
 
+echo Configuring WordPress core auto-updates to manual...
+call wp config set WP_AUTO_UPDATE_CORE false --raw
+if !ERRORLEVEL! neq 0 (
+    echo [WARNING] Failed to set WP_AUTO_UPDATE_CORE in wp-config.php.
+) else (
+    echo Core auto-updates set to manual (WP_AUTO_UPDATE_CORE = false).
+)
+
 echo.
 echo Core files deployed and configuration generated successfully.
 echo.
@@ -203,8 +212,8 @@ echo Purging default plugins (hello, akismet)...
 call wp plugin delete hello akismet
 
 echo.
-echo Installing Elementor, ACF, and Hello Elementor Theme...
-call wp plugin install elementor advanced-custom-fields --activate
+echo Installing Elementor, ACF, Easy Updates Manager, and Hello Elementor Theme...
+call wp plugin install elementor advanced-custom-fields easy-updates-manager --activate
 call wp theme install hello-elementor --activate
 
 echo.
@@ -241,6 +250,12 @@ call wp plugin install seo-by-rank-math wp-mail-smtp better-wp-security wp-secur
 
 echo.
 echo Verifying and installing additional local zip plugins (Deactivated)...
+if exist "%PLUGIN_AHM_PUBLISHER_ZIP%" (
+    call wp plugin install "%PLUGIN_AHM_PUBLISHER_ZIP%"
+) else (
+    echo Warning: AHM Publisher zip not found at "%PLUGIN_AHM_PUBLISHER_ZIP%". Skipping.
+)
+
 if exist "%PLUGIN_RANK_MATH_PRO_ZIP%" (
     call wp plugin install "%PLUGIN_RANK_MATH_PRO_ZIP%"
 ) else (
