@@ -213,7 +213,7 @@ call wp plugin delete hello akismet
 
 echo.
 echo Installing Elementor, ACF, Easy Updates Manager, and Hello Elementor Theme...
-call wp plugin install elementor advanced-custom-fields easy-updates-manager --activate
+call wp plugin install elementor advanced-custom-fields stops-core-theme-and-plugin-updates --activate
 call wp theme install hello-elementor --activate
 
 echo.
