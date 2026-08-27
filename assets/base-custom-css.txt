@@ -147,29 +147,7 @@ body:not(.logged-in) .admin-only {
 
 
 /* ==========================================================================
-   5. Component: Image Carousel (Swiper Fixes)
-   ========================================================================== */
-
-/* Enable linear transition timing for continuous scrolling carousels */
-.image-carousel .swiper-wrapper {
-    -webkit-transition-timing-function: linear !important;
-    transition-timing-function: linear !important;
-}
-
-/* Center inner content container within each slide */
-.image-carousel .swiper-slide > div > .e-con-inner {
-    justify-content: center;
-}
-
-/* Preserve original image aspect ratio and intrinsic sizing */
-.image-carousel .swiper-slide img {
-    width: auto;
-    height: auto;
-}
-
-
-/* ==========================================================================
-   6. Component: Custom Form Acceptance Checkbox
+   5. Component: Custom Form Acceptance Checkbox
    ========================================================================== */
 
 /* Flexbox container for form acceptance label and input */
@@ -210,7 +188,7 @@ body:not(.logged-in) .admin-only {
 
 
 /* ==========================================================================
-   7. Component: International Telephone Input (intlTelInput)
+   6. Component: International Telephone Input (intlTelInput)
    ========================================================================== */
 
 /* Stack phone input elements vertically after plugin initialization */
@@ -232,7 +210,7 @@ form .elementor-field-type-tel.intlTelInput-initiated input[type="tel"] {
 
 
 /* ==========================================================================
-   8. Component: Button Variants & Hover States
+   7. Component: Button Variants & Hover States
    ========================================================================== */
 
 /* Default button hover effect: subtle elevation bump */
@@ -277,7 +255,7 @@ form .elementor-field-type-tel.intlTelInput-initiated input[type="tel"] {
 
 
 /* ==========================================================================
-   9. Component: Global Video Tooltip
+   8. Component: Global Video Tooltip
    ========================================================================== */
 
 /* Pointer cursor on interactive trigger container */
@@ -348,6 +326,20 @@ form .elementor-field-type-tel.intlTelInput-initiated input[type="tel"] {
 .video-unavailable-tooltip svg {
     stroke: #16b0d6;
     flex-shrink: 0;
+}
+
+/* ==========================================================================
+   9. Responsive Breakpoints & Media Queries
+   ========================================================================== */
+.e-off-canvas .e-off-canvas__content {
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    scrollbar-width: none; /* Firefox */
 }
 
 
