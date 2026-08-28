@@ -220,37 +220,34 @@ form .elementor-field-type-tel.intlTelInput-initiated input[type="tel"] {
     transform: translateY(-1px);
 }
 
-/* --- Secondary Button Variant --- */
-.elementor-widget-button.btn-secondary a {
-    background-color: #16B0D6 !important;
-    border-color: #16B0D6 !important;
+
+/* Default button active/press state: tactile scale down */
+.elementor-widget-button a:active,
+.e-loop__load-more .elementor-button:active,
+.elementor-field-type-submit button:active {
+    transform: scale(0.98);
 }
 
-.elementor-widget-button.btn-secondary a:hover {
-    background-color: #14A2C4 !important;
-    border-color: #14A2C4 !important;
-}
-
-/* --- Outline Button Variant --- */
-.elementor-widget-button.btn-outline a {
-    color: #073B4C !important;
+/* --- Plain Button Variant --- */
+.elementor-widget-button.btn-plain a {
     background-color: transparent !important;
-    border-color: #073B4C24 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
 }
 
-.elementor-widget-button.btn-outline a:hover {
-    border-color: #073B4C !important;
+.elementor-widget-button.btn-plain a svg {
+    width: 10px;
+    transition: margin-left 0.2s ease-in-out;
 }
 
-/* --- Ghost Button Variant --- */
-.elementor-widget-button.btn-ghost a {
-    color: #FFFFFF !important;
-    background-color: #FFFFFF1F !important;
-    border-color: #FFFFFF80 !important;
+.elementor-widget-button.btn-plain a:hover {
+    padding-bottom: 2px !important;
+    border-bottom: 1px solid var( --e-global-color-accent ) !important;
 }
 
-.elementor-widget-button.btn-ghost a:hover {
-    border-color: #FFFFFF !important;
+.elementor-widget-button.btn-plain a:hover svg {
+    margin-left: 2px;
 }
 
 
