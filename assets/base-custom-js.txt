@@ -105,16 +105,21 @@
 
         headerMenuHoverEvents: function () {
             const menuItems = document.querySelectorAll('.header-menu-item')
-            const target = document.querySelector('.header-menu-item-image')
-
-            if (! target || ! menuItems.length) return
-
-            const computedTargetImage = window.getComputedStyle(target).backgroundImage
-            const defaultBg = computedTargetImage !== 'none' ? computedTargetImage : `url('/wp-content/uploads/2026/05/ImageWithFallback-4.webp')`
+            if (!menuItems.length) return
 
             menuItems.forEach(item => {
+                const parentContent = item.closest('.e-n-menu-content')
+                const target = parentContent ? parentContent.querySelector('.header-menu-item-image') : document.querySelector('.header-menu-item-image')
+                if (!target) return
+
+                if (!target.dataset.defaultBg) {
+                    const computedTargetImage = window.getComputedStyle(target).backgroundImage
+                    target.dataset.defaultBg = computedTargetImage !== 'none' ? computedTargetImage : `url('/wp-content/uploads/2026/05/ImageWithFallback-4.webp')`
+                }
+                const defaultBg = target.dataset.defaultBg
+
                 const img = item.querySelector('img')
-                if (! img) return
+                if (!img) return
 
                 // Elementor-safe image source resolution
                 const imgUrl =
