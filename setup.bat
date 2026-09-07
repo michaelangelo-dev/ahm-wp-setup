@@ -55,6 +55,15 @@ if "%PAGE_LAYOUT_CHOICE%"=="3" set "ELEM_LAYOUT=elementor_header_footer"
 set "ATOMIC_EDITOR_CHOICE="
 set /p ATOMIC_EDITOR_CHOICE="[STEP 1] Activate Elementor Atomic Editor? (Y/N) [default: N]: "
 
+set "CUSTOM_FONTS_CHOICE="
+set /p CUSTOM_FONTS_CHOICE="[STEP 1] Disable Elementor Google Fonts & self-host custom fonts? (Y/N) [default: N]: "
+
+set "FONT_FAMILIES_CHOICE="
+if /i "%CUSTOM_FONTS_CHOICE%"=="Y" (
+    set /p FONT_FAMILIES_CHOICE="[STEP 1] Enter Google Fonts to self-host (comma-separated) [default: Inter,Manrope,Sora]: "
+    if "!FONT_FAMILIES_CHOICE!"=="" set "FONT_FAMILIES_CHOICE=Inter,Manrope,Sora"
+)
+
 :: 1. Folder Name: Stays exactly as entered (e.g., wp-test-automation)
 set "FOLDER_NAME=%SITE_NAME%"
 
@@ -74,6 +83,11 @@ echo Site Tagline:            %SITE_TAGLINE%
 echo New Target Directory:    %WWW_DIR%\%FOLDER_NAME%
 echo Target URL:              %SITE_URL%
 echo Database Name to Create: %DB_NAME%
+if /i "%CUSTOM_FONTS_CHOICE%"=="Y" (
+    echo Self-Hosted Fonts:       !FONT_FAMILIES_CHOICE! [Google Fonts disabled]
+) else (
+    echo Font Mode:               Standard Elementor Google Fonts
+)
 echo.
 
 :: Move into the www directory so the site folder is always created there
@@ -479,6 +493,36 @@ if exist "%LAYOUT_HELPER%" (
 ) else (
     echo [WARNING] Layout helper not found at "%LAYOUT_HELPER%". Skipping Layout Settings.
 )
+
+:: -------------------------------------------------------------------------
+:: STEP 10: OPTIONAL ELEMENTOR CUSTOM FONTS & GOOGLE FONTS DISABLER
+:: -------------------------------------------------------------------------
+echo =========================================================================
+echo [STEP 10] ELEMENTOR FONTS CONFIGURATION
+echo =========================================================================
+
+if /i not "%CUSTOM_FONTS_CHOICE%"=="Y" (
+    echo Skipping custom font self-hosting: default Elementor Google Fonts active.
+    goto :step10done
+)
+
+set "FONTS_HELPER=%SCRIPT_DIR%helpers\custom-fonts-setup.php"
+if not exist "%FONTS_HELPER%" (
+    echo [WARNING] Fonts helper not found at "%FONTS_HELPER%". Skipping Step 10.
+    goto :step10done
+)
+
+echo Downloading and registering Elementor Custom Fonts: %FONT_FAMILIES_CHOICE%...
+call wp eval-file "%FONTS_HELPER%" "%FONT_FAMILIES_CHOICE%" --user=admin
+if !ERRORLEVEL! neq 0 (
+    echo [WARNING] Custom fonts setup encountered an issue. Review output above.
+) else (
+    echo Elementor Custom Fonts registered and Google Fonts disabled successfully.
+)
+
+:step10done
+
+echo.
 
 echo =========================================================================
 echo SETUP COMPLETE: CONFIGURATION SUCCESSFUL FOR "%SITE_NAME%"
