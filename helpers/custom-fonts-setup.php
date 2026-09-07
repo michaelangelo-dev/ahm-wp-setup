@@ -66,6 +66,9 @@ $user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHT
 $all_font_types = get_option('elementor_fonts_manager_font_types', []);
 $all_elementor_fonts = get_option('elementor_fonts_manager_fonts', []);
 
+$primary_family = $font_families[0] ?? '';
+$primary_preload_url = '';
+
 foreach ($font_families as $family) {
     WP_CLI::log("-------------------------------------------------------------------------");
     WP_CLI::log("Processing: {$family}...");
@@ -233,10 +236,45 @@ foreach ($font_families as $family) {
         'font_type'   => 'custom',
     ];
 
+    // Designate first family's weight 400 (or first weight) as primary preloaded font
+    if ($family === $primary_family && empty($primary_preload_url)) {
+        foreach ($font_files as $file_entry) {
+            if ('400' === $file_entry['font_weight'] && ! empty($file_entry['woff2']['url'])) {
+                $primary_preload_url = $file_entry['woff2']['url'];
+                break;
+            }
+        }
+        if (empty($primary_preload_url) && ! empty($font_files[0]['woff2']['url'])) {
+            $primary_preload_url = $font_files[0]['woff2']['url'];
+        }
+    }
+
     WP_CLI::success("{$action} Elementor Custom Font: '{$family}' (" . count($font_files) . " weights).");
 }
 
-// 5. Invalidate & refresh Elementor font caches
+// 5. Configure Dynamic High-Priority Preload & WP Rocket Sync
+if (! empty($primary_preload_url)) {
+    update_option('ahm_preload_font_url', $primary_preload_url);
+    WP_CLI::log("Set primary preloaded font URL: {$primary_preload_url}");
+
+    // If WP Rocket settings exist, sync into WP Rocket preload_fonts array
+    $rocket_settings = get_option('wp_rocket_settings');
+    if (is_array($rocket_settings)) {
+        $parsed_path = wp_parse_url($primary_preload_url, PHP_URL_PATH);
+        if (! empty($parsed_path)) {
+            if (! isset($rocket_settings['preload_fonts']) || ! is_array($rocket_settings['preload_fonts'])) {
+                $rocket_settings['preload_fonts'] = [];
+            }
+            if (! in_array($parsed_path, $rocket_settings['preload_fonts'], true)) {
+                $rocket_settings['preload_fonts'][] = $parsed_path;
+                update_option('wp_rocket_settings', $rocket_settings);
+                WP_CLI::log("Synced primary font into WP Rocket Preload Fonts: {$parsed_path}");
+            }
+        }
+    }
+}
+
+// 6. Invalidate & refresh Elementor font caches
 update_option('elementor_fonts_manager_font_types', $all_font_types);
 update_option('elementor_fonts_manager_fonts', $all_elementor_fonts);
 

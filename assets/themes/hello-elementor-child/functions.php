@@ -38,4 +38,13 @@ if ('yes' === get_option('ahm_disable_google_fonts')) {
         unset($groups['googlefonts'], $groups['earlyaccess']);
         return $groups;
     });
+
+    // Dynamic High-Priority Preload for Primary Brand Font
+    add_action('wp_head', function () {
+        $preload_url = get_option('ahm_preload_font_url');
+        if (! empty($preload_url)) {
+            echo '<link rel="preload" href="' . esc_url($preload_url) . '" as="font" type="font/woff2" crossorigin>' . "\n";
+        }
+    }, 1);
 }
+
