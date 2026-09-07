@@ -24,3 +24,18 @@ endif;
 add_action('wp_enqueue_scripts', 'child_theme_configurator_css', 10);
 
 // END ENQUEUE PARENT ACTION
+
+/**
+ * Optional Elementor Google Fonts Disabler & Typography Filter
+ * Active only when 'ahm_disable_google_fonts' option is set to 'yes'.
+ */
+if ('yes' === get_option('ahm_disable_google_fonts')) {
+    // Disable Elementor's automatic Google Fonts frontend loader
+    add_filter('elementor/frontend/print_google_fonts', '__return_false');
+
+    // Restrict Elementor's typography control dropdown to Custom and System fonts
+    add_filter('elementor/fonts/groups', function ($groups) {
+        unset($groups['googlefonts'], $groups['earlyaccess']);
+        return $groups;
+    });
+}
