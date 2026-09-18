@@ -11,12 +11,45 @@
             this.addFormSpinnerSyle()
             this.headerMenuHoverEvents()
             this.initIntlTelInput()
-
+            
+            // this.initCarouselNavigation()
             // this.oddEvenGridItemGridItems()
             // this.slidePauseOnLightbox()
             // this.tocOverride()
             // this.observeOthersDropdown()
             // this.initVideoTooltip()
+        },
+
+        initCarouselNavigation: function () {
+            const parentSections = document.querySelectorAll('.carousel-parent, .carousel-section-bleed')
+            
+            if (!parentSections.length) return
+
+            parentSections.forEach(section => {
+                const navBox = section.querySelector('.carousel-nav-box')
+
+                if (!navBox || navBox.dataset.carouselNavInit === 'true') return
+                
+                const carousel = section.querySelector('.carousel-bleed-right')
+
+                if (!carousel) return
+
+                const prevBtn = carousel.querySelector('.elementor-swiper-button-prev')
+                const nextBtn = carousel.querySelector('.elementor-swiper-button-next')
+
+                if (!prevBtn || !nextBtn) return
+            
+                const widgetIdClass = [...carousel.classList].find(c => c.startsWith('elementor-element-'))
+
+                if (widgetIdClass) navBox.classList.add(widgetIdClass)
+                
+                const widgetType = carousel.classList.contains('elementor-widget-loop-carousel')
+                    ? 'elementor-widget-loop-carousel'
+                    : 'elementor-widget-n-carousel'
+                navBox.classList.add('e-widget-swiper', widgetType)
+                navBox.append(prevBtn, nextBtn)
+                navBox.dataset.carouselNavInit = 'true'
+            })
         },
 
         handleScroll: function () {
@@ -35,7 +68,6 @@
 
             const isModifier = e.ctrlKey || e.metaKey
 
-            // Add red outline to all elements for debugging
             if (isModifier && e.key === 'ArrowDown') {
                 e.preventDefault()
 
@@ -55,7 +87,6 @@
                 }
             }
 
-            // Reload page with ?nowprocket to test without Rocket Loader
             if (isModifier && e.key === 'ArrowUp') {
                 e.preventDefault()
                 const url = new URL(window.location.href)
@@ -70,7 +101,6 @@
         addFormSpinnerSyle: function() {
             const style = document.createElement('style')
             const css = `
-                /* Create the Spinner using a pseudo-element */
                 .elementor-form .elementor-button.is-loading::after {
                     content: "";
                     position: absolute;
@@ -91,7 +121,6 @@
                     opacity: 0;
                 }
 
-                /* Loading Animation Keyframes */
                 @keyframes spin {
                     to {
                         transform: rotate(360deg);
@@ -107,37 +136,100 @@
             const menuItems = document.querySelectorAll('.header-menu-item')
             if (!menuItems.length) return
 
+            // Group items by their parent dropdown content to support multiple menus
+            const containers = new Set()
+
             menuItems.forEach(item => {
-                const parentContent = item.closest('.e-n-menu-content')
-                const target = parentContent ? parentContent.querySelector('.header-menu-item-image') : document.querySelector('.header-menu-item-image')
+                const parentContent = item.closest('.e-n-menu-content') || document
+                const target = parentContent.querySelector('.header-menu-item-image')
                 if (!target) return
 
+                // 1. Store the initial default background once
                 if (!target.dataset.defaultBg) {
                     const computedTargetImage = window.getComputedStyle(target).backgroundImage
-                    target.dataset.defaultBg = computedTargetImage !== 'none' ? computedTargetImage : `url('/wp-content/uploads/2026/05/ImageWithFallback-4.webp')`
+                    target.dataset.defaultBg = computedTargetImage !== 'none'
+                        ? computedTargetImage
+                        : `url('/wp-content/uploads/2026/05/ImageWithFallback-4.webp')`
                 }
                 const defaultBg = target.dataset.defaultBg
 
+                // 2. Preload the item's image in browser cache for zero-lag display
                 const img = item.querySelector('img')
                 if (!img) return
 
-                // Elementor-safe image source resolution
                 const imgUrl =
                     img.getAttribute('data-src') ||
                     img.getAttribute('data-lazy-src') ||
                     img.currentSrc ||
                     img.src
 
+                if (imgUrl) {
+                    const preload = new Image()
+                    preload.src = imgUrl
+                }
+
+                // 3. Hover Enter on Menu Item
                 item.addEventListener('mouseenter', () => {
                     if (!imgUrl) return
-                    target.style.backgroundImage = `url("${imgUrl}")`
+
+                    // Cancel any pending timer to revert to default
+                    if (target._hoverResetTimer) {
+                        clearTimeout(target._hoverResetTimer)
+                        target._hoverResetTimer = null
+                    }
+
+                    // Quick crossfade effect
+                    target.style.opacity = '0.7'
+                    setTimeout(() => {
+                        target.style.backgroundImage = `url("${imgUrl}")`
+                        target.style.opacity = '1'
+                    }, 80)
                 })
 
+                // 4. Hover Leave on Menu Item (Add delay buffer)
                 item.addEventListener('mouseleave', () => {
-                    target.style.backgroundImage = defaultBg
+                    if (target._hoverResetTimer) {
+                        clearTimeout(target._hoverResetTimer)
+                    }
+
+                    // 400ms delay: if moving to another item, the next mouseenter cancels this!
+                    target._hoverResetTimer = setTimeout(() => {
+                        target.style.opacity = '0.7'
+                        setTimeout(() => {
+                            target.style.backgroundImage = defaultBg
+                            target.style.opacity = '1'
+                        }, 80)
+                        target._hoverResetTimer = null
+                    }, 400) // Adjust this duration (e.g. 300ms - 500ms) to taste
                 })
+
+                // Prevent attaching duplicate listeners to the target container itself
+                if (!target.dataset.hoverListenersBound) {
+                    target.dataset.hoverListenersBound = 'true'
+
+                    target.addEventListener('mouseenter', () => {
+                        if (target._hoverResetTimer) {
+                            clearTimeout(target._hoverResetTimer)
+                            target._hoverResetTimer = null
+                        }
+                    })
+
+                    target.addEventListener('mouseleave', () => {
+                        if (target._hoverResetTimer) {
+                            clearTimeout(target._hoverResetTimer)
+                        }
+                        target._hoverResetTimer = setTimeout(() => {
+                            target.style.opacity = '0.7'
+                            setTimeout(() => {
+                                target.style.backgroundImage = defaultBg
+                                target.style.opacity = '1'
+                            }, 80)
+                            target._hoverResetTimer = null
+                        }, 400)
+                    })
+                }
             })
-        },
+        }
 
         formSubmitSpinner: function() {
             document.addEventListener('submit', function(event) {
@@ -216,7 +308,6 @@
                                     .then(data => callback(data.country_code))
                                     .catch(() => callback('us'))
                             },
-                            // Ensure utilsScript is loaded for formatting/validation
                             utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js'
                         })
                         
@@ -246,10 +337,8 @@
                 document.head.appendChild(jsScript)
             }
             
-            // Run immediately
             initTelInputs()
             
-            // Re-run for dynamically added elements (like popups)
             const observer = new MutationObserver((mutations) => {
                 const hasNewNodes = mutations.some(m => m.addedNodes.length > 0)
                 if (hasNewNodes) initTelInputs()
@@ -260,11 +349,7 @@
 
         applyDateFieldSettings: function(el) {
             const fields = {
-                // Field for today or future dates
-                'form-field-preferred_date': { minDate: 'today', maxDate: null },
-
-                // Field for today or past dates
-                // 'form-field-field_3a2b774':   { minDate: null, maxDate: 'today' }
+                'form-field-preferred_date': { minDate: 'today', maxDate: null }
             }
             const fieldId = el.getAttribute('id')
             const settings = fields[fieldId]
@@ -273,14 +358,10 @@
                 if (el._flatpickr) {
                     const instance = el._flatpickr
 
-                    // Manually remove the native validation
                     el.removeAttribute('pattern')
 
                     if (settings) {
-                        // For today or future dates
                         if (settings.minDate) instance.set('minDate', settings.minDate)
-
-                        // For today or past dates
                         if (settings.maxDate) instance.set('maxDate', settings.maxDate)
 
                         instance.set('allowInput', true)
@@ -296,7 +377,7 @@
                 }
             }, 50)
 
-            setTimeout(() => clearInterval(checkInstance), 5000);
+            setTimeout(() => clearInterval(checkInstance), 5000)
         },
 
         observeDateInputs: function() {
@@ -328,7 +409,7 @@
             if (!targetContainer) return
 
             const applyGridClasses = () => {
-            const gridItems = targetContainer.querySelectorAll(':scope > .e-loop-item')
+                const gridItems = targetContainer.querySelectorAll(':scope > .e-loop-item')
                 gridItems.forEach((item, index) => {
                     if (index % 2 === 0) {
                         item.classList.add('is-odd')
@@ -418,10 +499,7 @@
         },
 
         observeOthersDropdown: function () {
-            // Map the select element selector to the dependent "Other" field selector
-            const fieldsMap = {
-                // '#form-field-field_b9ddd79': '.elementor-field-group-field_786199a'
-            }
+            const fieldsMap = {}
 
             const toggleOtherField = (selectElement, otherElement) => {
                 const otherWrapper = otherElement.closest('.elementor-field-group') || otherElement
@@ -478,9 +556,9 @@
 
             setupFields()
         },
+
         initVideoTooltip: function () {
             const createTooltipElement = (triggerEl) => {
-                // If class is placed directly on an <img> tag, attach tooltip to parent container
                 const container = triggerEl.tagName.toLowerCase() === 'img' 
                     ? triggerEl.parentElement 
                     : triggerEl
@@ -512,28 +590,19 @@
                 return container
             }
 
-            /**
-             * Pre-renders tooltips for all trigger elements on the page
-             */
             const setupAllTooltips = () => {
                 const triggers = document.querySelectorAll('.video-tooltip-trigger')
                 triggers.forEach(el => createTooltipElement(el))
             }
 
-            // 1. Pre-render immediately on load
             setupAllTooltips()
 
-            // 2. Watch for dynamically added triggers (e.g. popups, lazy loaded sections)
             const observer = new MutationObserver((mutations) => {
                 const hasAddedNodes = mutations.some(m => m.addedNodes.length > 0)
                 if (hasAddedNodes) setupAllTooltips()
             })
             observer.observe(document.body, { childList: true, subtree: true })
 
-            /**
-             * Persistent click handler with 3-second auto-dismiss
-             * @param {HTMLElement} triggerEl 
-             */
             const showTooltip = (triggerEl) => {
                 const container = createTooltipElement(triggerEl)
                 const tooltip = container.querySelector('.video-unavailable-tooltip')
@@ -556,7 +625,6 @@
                 activeTimeouts.set(container, timeoutId)
             }
 
-            // 3. Delegated click listener
             document.body.addEventListener('click', (e) => {
                 const trigger = e.target.closest('.video-tooltip-trigger')
                 if (trigger) {
@@ -564,7 +632,7 @@
                     showTooltip(trigger)
                 }
             })
-        },
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
