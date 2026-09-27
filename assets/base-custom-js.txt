@@ -229,7 +229,7 @@
                     })
                 }
             })
-        }
+        },
 
         formSubmitSpinner: function() {
             document.addEventListener('submit', function(event) {
