@@ -9,15 +9,16 @@ It fully automates core installation, database creation, plugin/theme provisioni
 ## 📋 Table of Contents
 1. [Prerequisites & System Requirements](#-prerequisites--system-requirements)
 2. [Workstation & Environment Setup](#-workstation--environment-setup)
-3. [Repository Directory Structure](#-repository-directory-structure)
-4. [Master Setup Guide (`setup.bat`)](#-master-setup-guide-setupbat)
-5. [Auxiliary Scripts & Standalone Tools](#-auxiliary-scripts--standalone-tools)
+3. [ImageMagick (`php_imagick`) Configuration](#-imagemagick-php_imagick-configuration)
+4. [Repository Directory Structure](#-repository-directory-structure)
+5. [Master Setup Guide (`setup.bat`)](#-master-setup-guide-setupbat)
+6. [Auxiliary Scripts & Standalone Tools](#-auxiliary-scripts--standalone-tools)
    - [Apply Custom Fonts (`apply-fonts.bat`)](#a-apply-custom-fonts-apply-fontsbat)
    - [Apply Page Structure (`apply-pages.bat`)](#b-apply-page-structure-apply-pagesbat)
    - [Fetch Figma Node JSON (`fetch-figma-json.bat`)](#c-fetch-figma-node-json-fetch-figma-jsonbat)
    - [Repackage AHM Core (`package-ahm-core.ps1`)](#d-repackage-ahm-core-package-ahm-coreps1)
-6. [Default Provisioning Credentials](#-default-provisioning-credentials)
-7. [Developer Machine Calibration & Troubleshooting](#-developer-machine-calibration--troubleshooting)
+7. [Default Provisioning Credentials](#-default-provisioning-credentials)
+8. [Developer Machine Calibration & Troubleshooting](#-developer-machine-calibration--troubleshooting)
 
 ---
 
@@ -29,8 +30,8 @@ Before running any script, ensure your local workstation meets the following spe
 | :--- | :--- | :--- |
 | **Operating System** | Windows 10 / 11 (64-bit) | Executes native `.bat` and `.ps1` automation scripts. |
 | **Local Server Stack** | [Laragon (Full Edition)](https://laragon.org/) | Apache, MySQL/MariaDB, and PHP local web server environment. |
-| **PHP** | PHP 8.1+ or 8.2+ | WordPress runtime and WP-CLI execution. |
-| **PHP Extensions** | `curl`, `json`, `mbstring`, `mysqli`, `openssl`, `zip`, `xml` | Core WordPress, font scraping, and archive management. |
+| **PHP** | PHP 8.1+ or 8.2+ / 8.3+ | WordPress runtime and WP-CLI execution. |
+| **PHP Extensions** | `curl`, `json`, `mbstring`, `mysqli`, `openssl`, `zip`, `xml`, `php_imagick` | Core WordPress, media processing, font scraping, and archive management. |
 | **Database** | MySQL 8.0+ / MariaDB 10.4+ | Running locally on `localhost:3306` (`root` user, empty password). |
 | **WP-CLI** | Latest (`wp.bat` in Windows `PATH`) | Headless WordPress management and script evaluation. |
 | **PowerShell** | PowerShell 5.1+ or PowerShell 7+ | Automated `.zip` archive extraction and packaging. |
@@ -60,6 +61,51 @@ To ensure `https://*.test` local domains resolve securely without browser securi
 1. Open the **Laragon** control panel.
 2. Navigate to: **Menu** -> **Apache** -> **SSL** -> **Add laragon.crt to Trust Store**.
 3. Reload Apache.
+
+---
+
+## 🖼️ ImageMagick (`php_imagick`) Configuration
+
+WordPress uses **Imagick** (`WP_Image_Editor_Imagick`) as its primary image processing engine for WebP image generation, lossless thumbnail resizing, PDF preview generation, and high-quality image resampling. Without Imagick, WordPress falls back to the legacy `GD` library, which can trigger Site Health performance notices and lower image quality.
+
+### Installing `php_imagick` on Laragon (Windows)
+
+#### Step 1: Check your PHP Architecture & Thread Safety
+Run in your terminal:
+```cmd
+php -i | findstr /i "Thread Architecture"
+```
+*Note whether your PHP build is **x64** (64-bit) and **Thread Safe (TS)**.*
+
+#### Step 2: Download `php_imagick` DLL & ImageMagick Binaries
+1. Go to [PECL Imagick Downloads](https://pecl.php.net/package/imagick) (or the [Windows PHP PECL build directory](https://windows.php.net/downloads/pecl/releases/imagick/)).
+2. Select the latest release matching your exact PHP version (e.g. `php_imagick-3.7.0-8.3-ts-vs16-x64.zip`).
+3. Extract the downloaded ZIP archive.
+
+#### Step 3: Copy DLL Files into Laragon
+1. Copy `php_imagick.dll` into your PHP extensions directory:
+   ```text
+   C:\laragon\bin\php\<your-php-version>\ext\php_imagick.dll
+   ```
+2. Copy all `CORE_RL_*.dll` and `IM_MOD_RL_*.dll` files directly into your PHP root directory:
+   ```text
+   C:\laragon\bin\php\<your-php-version>\
+   ```
+   *(Optionally, copy these library DLLs into `C:\laragon\bin\apache\<your-apache-version>\bin\` if running via Apache mod_php).*
+
+#### Step 4: Enable the Extension in `php.ini`
+Open `C:\laragon\bin\php\<your-php-version>\php.ini` (or click **Laragon** -> **PHP** -> **php.ini**) and add:
+```ini
+extension=php_imagick.dll
+```
+
+#### Step 5: Restart Laragon & Verify
+1. Click **Stop** then **Start All** in Laragon.
+2. Verify that Imagick is successfully loaded:
+   ```cmd
+   php -m | findstr -i imagick
+   ```
+   *Should output: `imagick`*
 
 ---
 
